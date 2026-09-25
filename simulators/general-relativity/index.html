@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Relativity & Schwarzschild Geodesic Simulator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- KaTeX Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background-color: #030712;
+            color: #e2e8f0;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 3px;
+        }
+        .glass-panel {
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #1e293b;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #a855f7;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -5px;
+            box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+        }
+        .katex { font-size: 0.95em; }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col select-none overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="glass-panel z-20 px-4 py-2.5 flex items-center justify-between border-b border-slate-800 shrink-0">
+        <div class="flex items-center space-x-3">
+            <a href="../../index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 mr-1" title="Return to Catalog">
+                <i class="fa-solid fa-arrow-left"></i> Catalog
+            </a>
+            <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-purple-500/20">
+                <i class="fa-solid fa-circle-nodes text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-base tracking-wide text-white flex items-center gap-2">
+                    General Relativity Lab
+                    <span class="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-normal">Schwarzschild Metric</span>
+                </h1>
+                <p class="text-xs text-slate-400">Geodesics, Perihelion Precession & Light Deflection</p>
+            </div>
+        </div>
+
+        <!-- Simulation Controls -->
+        <div class="flex items-center space-x-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+            <button id="btn-play" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+                <i class="fa-solid fa-play"></i> <span id="lbl-play">Start</span>
+            </button>
+            <button id="btn-reset" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+            <div class="h-4 w-px bg-slate-800 mx-1"></div>
+            <!-- Preset Selector -->
+            <div class="flex items-center gap-1.5 pl-1">
+                <i class="fa-solid fa-sliders text-xs text-slate-400"></i>
+                <select id="preset-select" class="bg-slate-800 text-xs text-slate-200 border border-slate-700 rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500">
+                    <option value="precession">Preset: Mercury Precession (Exaggerated GR)</option>
+                    <option value="photon-sphere">Preset: Photon Sphere Deflection & Capture</option>
+                    <option value="isco">Preset: ISCO Orbit (Innermost Stable Orbit)</option>
+                    <option value="light-bending">Preset: Gravitational Light Deflection</option>
+                    <option value="black-hole-plunge">Preset: Event Horizon Plunge</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Display Toggles & Lab Modal Button -->
+        <div class="hidden lg:flex items-center space-x-2">
+            <button id="toggle-grid" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-purple-600/30 text-purple-300 border border-purple-500/40 flex items-center gap-1.5">
+                <i class="fa-solid fa-border-all"></i> Spacetime Mesh
+            </button>
+            <button id="toggle-horizons" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-purple-600/30 text-purple-300 border border-purple-500/40 flex items-center gap-1.5">
+                <i class="fa-solid fa-bullseye"></i> Horizons
+            </button>
+            <button id="btn-math-modal" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 ml-2 transition">
+                <i class="fa-solid fa-graduation-cap"></i> GR Field Equations
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex relative overflow-hidden">
+
+        <!-- Left Sidebar: Controls & Inspector -->
+        <aside class="w-80 glass-panel border-r border-slate-800 flex flex-col z-10 shrink-0 overflow-y-auto">
+            <div class="p-3.5 border-b border-slate-800 bg-slate-900/40">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-purple-400"></i> Relativistic Parameters
+                </h2>
+            </div>
+
+            <div class="p-4 space-y-5 text-xs flex-1">
+                
+                <!-- GR Effect Intensity Correction -->
+                <div>
+                    <div class="flex justify-between text-slate-300 mb-1">
+                        <span class="font-medium">Relativistic Factor (α)</span>
+                        <span id="disp-alpha" class="mono text-purple-300 font-semibold">1.00</span>
+                    </div>
+                    <input type="range" id="slider-alpha" min="0" max="5" step="0.05" value="1.0" class="w-full">
+                    <p class="text-[10px] text-slate-500 mt-1">Scale GR 1/r³ term (0.0 = Newtonian Gravity).</p>
+                </div>
+
+                <!-- Central Mass Slider -->
+                <div>
+                    <div class="flex justify-between text-slate-300 mb-1">
+                        <span class="font-medium">Black Hole Mass (M)</span>
+                        <span id="disp-mass" class="mono text-purple-300 font-semibold">10 M☉</span>
+                    </div>
+                    <input type="range" id="slider-mass" min="1" max="50" step="1" value="10" class="w-full">
+                </div>
+
+                <!-- Particle Type Toggle -->
+                <div class="space-y-2 pt-2 border-t border-slate-800">
+                    <label class="font-medium text-slate-300 block">Test Particle Type</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-type-massive" class="py-1.5 rounded-lg bg-purple-600 text-white font-semibold text-xs border border-purple-500/50">
+                            Massive Body (m > 0)
+                        </button>
+                        <button id="btn-type-photon" class="py-1.5 rounded-lg bg-slate-800 text-slate-400 font-semibold text-xs border border-slate-700">
+                            Photon Light (m = 0)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Initial Velocity Vector Controls -->
+                <div class="space-y-2 pt-2 border-t border-slate-800">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-slate-300">Initial Speed (v / c)</span>
+                        <span id="disp-speed" class="mono text-emerald-400 font-semibold">0.45 c</span>
+                    </div>
+                    <input type="range" id="slider-speed" min="0.01" max="1.0" step="0.01" value="0.45" class="w-full">
+                </div>
+
+                <!-- Orbit Path Tail Length -->
+                <div class="pt-2 border-t border-slate-800">
+                    <div class="flex justify-between text-slate-300 mb-1">
+                        <span>Geodesic Path Trail</span>
+                        <span id="disp-trail-len" class="mono text-purple-300">1200 pts</span>
+                    </div>
+                    <input type="range" id="slider-trail-len" min="500" max="10000" step="500" value="3000" class="w-full">
+                </div>
+
+                <!-- Schwarzschild Critical Boundaries Explanation -->
+                <div class="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-xl p-3 mb-4 space-y-2">
+                    <div class="text-[10px] font-semibold text-purple-400 uppercase tracking-wider">Critical Boundaries:</div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-rose-400 font-medium">Event Horizon (rₛ)</span>
+                        <span id="disp-rs" class="mono text-slate-300">29.5 km</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-amber-400 font-medium">Photon Sphere (1.5 rₛ)</span>
+                        <span id="disp-rphoton" class="mono text-slate-300">44.3 km</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-indigo-400 font-medium">ISCO Orbit (3.0 rₛ)</span>
+                        <span id="disp-risco" class="mono text-slate-300">88.6 km</span>
+                    </div>
+                </div>
+
+                <!-- Telemetry Bottom Cards -->
+                <div class="grid grid-cols-4 gap-3">
+                    <div class="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-xl p-3.5">
+                        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Radial Distance (r / rₛ)</div>
+                        <div id="hud-r-rs" class="mono text-lg font-bold text-purple-400">0.00 rₛ</div>
+                    </div>
+                    <div class="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-xl p-3.5">
+                        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Gravitational Time Dilation</div>
+                        <div id="hud-time-dilation" class="mono text-lg font-bold text-amber-400">1.00x slower</div>
+                    </div>
+                    <div class="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-xl p-3.5">
+                        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Effective Potential (V_eff)</div>
+                        <div id="hud-veff" class="mono text-lg font-bold text-emerald-400">0.00 c²</div>
+                    </div>
+                    <div class="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-xl p-3.5">
+                        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Precession Angle Shift</div>
+                        <div id="hud-precession" class="mono text-lg font-bold text-cyan-400">0.0° / orbit</div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- Center Interactive Viewport -->
+        <main class="flex-1 relative bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
+            <canvas id="sim-canvas" class="w-full h-full cursor-grab active:cursor-grabbing block"></canvas>
+
+            <!-- Floating Top HUD -->
+            <div class="absolute top-4 left-4 right-4 flex justify-between pointer-events-none z-10">
+                <div class="glass-panel px-3.5 py-2 rounded-xl border border-slate-800/80 pointer-events-auto flex items-center gap-3">
+                    <i class="fa-solid fa-atom text-purple-400"></i>
+                    <div>
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Spacetime Metric</div>
+                        <div class="mono text-xs font-bold text-white">Schwarzschild Coordinates</div>
+                    </div>
+                </div>
+
+                <!-- Zoom Controls -->
+                <div class="glass-panel px-2 py-1 rounded-xl border border-slate-800/80 pointer-events-auto flex items-center gap-1">
+                    <button id="btn-zoom-in" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+                    <button id="btn-zoom-out" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition">
+                        <i class="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <button id="btn-recenter" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition">
+                        <i class="fa-solid fa-compress text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Relativistic Telemetry -->
+            <div class="absolute bottom-4 left-4 right-4 glass-panel rounded-2xl p-4 border border-slate-800/90 pointer-events-auto max-w-4xl mx-auto shadow-2xl">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    
+                    <div class="glass-card p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Radial Distance (r / rₛ)</div>
+                        <div id="hud-r-rs" class="mono text-sm font-bold text-purple-400">4.20 rₛ</div>
+                    </div>
+
+                    <div class="glass-card p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Gravitational Time Dilation</div>
+                        <div id="hud-time-dilation" class="mono text-sm font-bold text-amber-400">1.13x slower</div>
+                    </div>
+
+                    <div class="glass-card p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Effective Potential (V_eff)</div>
+                        <div id="hud-potential" class="mono text-sm font-bold text-emerald-400">-0.14 c²</div>
+                    </div>
+
+                    <div class="glass-card p-2.5 rounded-xl border border-slate-800">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Precession Angle Shift</div>
+                        <div id="hud-precession" class="mono text-sm font-bold text-sky-400">12.4° / orbit</div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- General Relativity Physics Modal -->
+    <div id="math-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-panel w-full max-w-3xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/60">
+                <div class="flex items-center gap-2">
+                    <div class="bg-purple-500/20 text-purple-400 p-2 rounded-lg">
+                        <i class="fa-solid fa-graduation-cap text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-white">General Relativity Equations</h3>
+                        <p class="text-xs text-slate-400">Einstein Field Equations & Geodesic Equations</p>
+                    </div>
+                </div>
+                <button id="btn-close-math" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4 overflow-y-auto text-xs">
+                
+                <div class="glass-card p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-purple-400 font-bold block mb-1">1. Einstein Field Equations</span>
+                    <div class="bg-slate-900/80 p-2.5 rounded-lg text-slate-200 text-center my-1 text-sm py-3 katex-block" data-formula="G_{\mu\nu} + \Lambda g_{\mu\nu} = \frac{8\pi G}{c^4} T_{\mu\nu}"></div>
+                    <p class="text-slate-400 mt-1">Describes how matter and energy dictate the curvature of spacetime ($G_{\mu\nu}$).</p>
+                </div>
+
+                <div class="glass-card p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-amber-400 font-bold block mb-1">2. Schwarzschild Radial Geodesic Differential Equation</span>
+                    <div class="bg-slate-900/80 p-2.5 rounded-lg text-slate-200 text-center my-1 text-sm py-3 katex-block" data-formula="\frac{d^2u}{d\phi^2} + u = \frac{GM}{L^2} + \frac{3GM}{c^2} u^2"></div>
+                    <p class="text-slate-400 mt-1">Here $u = 1/r$. The final term $\frac{3GM}{c^2} u^2$ represents the non-Newtonian relativistic correction responsible for perihelion precession!</p>
+                </div>
+
+                <div class="glass-card p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-rose-400 font-bold block mb-1">3. Gravitational Time Dilation</span>
+                    <div class="bg-slate-900/80 p-2.5 rounded-lg text-slate-200 text-center my-1 text-sm py-3 katex-block" data-formula="t_0 = t_f \sqrt{1 - \frac{r_s}{r}}"></div>
+                    <p class="text-slate-400 mt-1">Time slows down for an observer closer to a massive gravitational body relative to an observer at infinity.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="relativity.js"></script>
+</body>
+</html>
