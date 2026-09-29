@@ -72,7 +72,7 @@ function loadPreset(presetKey) {
     if (presetKey === 'sun-earth') {
         state.bodies.push(new CelestialBody('Sun', M_SUN, 0, 0, 0, 0, '#f59e0b', 18, true));
         state.bodies.push(new CelestialBody('Earth', M_EARTH, 1.0 * AU, 0, 0, 29780, '#38bdf8', 8, false));
-        state.zoom = 1.25;
+        state.zoom = 3.25;
         state.selectedBodyIndex = 1;
     } 
     else if (presetKey === 'elliptical') {
@@ -579,15 +579,22 @@ function renderKaTeX() {
  */
 function updateBodyTabsUI() {
     const container = document.getElementById('body-tabs-container');
+    if (!container) return;
+    
     container.innerHTML = '';
 
     state.bodies.forEach((b, idx) => {
         const tab = document.createElement('button');
         const isSelected = idx === state.selectedBodyIndex;
-        tab.className = `py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shrink-0 ${
-            isSelected ? 'bg-indigo-600 text-white shadow' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
+        
+        tab.className = `py-2 px-3.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap shrink-0 transition-all duration-200 ${
+            isSelected 
+                ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/60 shadow-sm shadow-indigo-500/25 ring-1 ring-indigo-500/30' 
+                : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200 hover:bg-slate-800 hover:border-slate-700'
         }`;
-        tab.innerHTML = `<span class="w-2 h-2 rounded-full" style="background-color: ${b.color}"></span> ${b.name}`;
+        
+        tab.innerHTML = `<span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${b.color}; box-shadow: 0 0 6px ${b.color}"></span> ${b.name}`;
+        
         tab.onclick = () => {
             state.selectedBodyIndex = idx;
             updateBodyTabsUI();
@@ -597,7 +604,18 @@ function updateBodyTabsUI() {
         container.appendChild(tab);
     });
 
-    document.getElementById('body-selector-count').innerText = `${state.bodies.length} Bodies`;
+    // Trap vertical scroll wheel events over tabs and map to horizontal scroll
+    container.onwheel = (e) => {
+        if (e.deltaY !== 0) {
+            e.preventDefault();
+            container.scrollLeft += e.deltaY;
+        }
+    };
+
+    const countElem = document.getElementById('body-selector-count');
+    if (countElem) {
+        countElem.innerText = `${state.bodies.length} Bodies`;
+    }
 }
 
 function updateInspectorUI() {

@@ -3,13 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Lab | Interactive Physics Simulators</title>
+    <title>Interact Physics | Free Interactive Physics & Orbital Mechanics Simulators</title>
+    
+    <!-- Primary SEO Meta Tags -->
+    <meta name="title" content="Interact Physics | Free Interactive Physics & Orbital Mechanics Simulators">
+    <meta name="description" content="Explore real-time interactive physics simulations for Newtonian Gravity, Kepler's Laws, and General Relativity. Built with RK4 integration and HTML5 Canvas.">
+    <meta name="keywords" content="physics simulator, interact physics, orbital mechanics, general relativity simulation, kepler laws simulator, N-body gravity simulator, spacetime simulator, webgl physics">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- MathJax Configuration & Library -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 
     <style>
         body {
@@ -27,139 +49,290 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .glass-card {
-            background: rgba(17, 24, 39, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .glass-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-6px);
+        }
+        .glow-purple:hover {
             border-color: rgba(168, 85, 247, 0.4);
-            box-shadow: 0 12px 30px -10px rgba(168, 85, 247, 0.25);
+            box-shadow: 0 20px 40px -15px rgba(168, 85, 247, 0.25);
+        }
+        .glow-blue:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 20px 40px -15px rgba(59, 130, 246, 0.25);
+        }
+        .glow-amber:hover {
+            border-color: rgba(245, 158, 11, 0.4);
+            box-shadow: 0 20px 40px -15px rgba(245, 158, 11, 0.25);
+        }
+        .hero-glow {
+            background: radial-gradient(circle at 50% 20%, rgba(147, 51, 234, 0.15) 0%, rgba(59, 130, 246, 0.08) 35%, rgba(3, 7, 18, 0) 70%);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+<body class="min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white relative overflow-x-hidden">
+
+    <!-- Ambient Glowing Background Accents -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] hero-glow pointer-events-none -z-10"></div>
+    <div class="absolute top-96 left-[-10%] w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+    <div class="absolute top-[30rem] right-[-10%] w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
 
     <!-- Header / Navbar -->
     <header class="glass-panel sticky top-0 z-50 border-b border-slate-800/80 px-6 py-4">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-purple-500/20">
-                    <i class="fa-solid fa-flask text-xl"></i>
+                <div class="bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 p-2.5 rounded-2xl text-white shadow-lg shadow-purple-500/25 border border-purple-400/20">
+                    <i class="fa-solid fa-atom text-2xl animate-spin-slow"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                        Interactive Physics Lab
+                    <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
+                        Interact Physics
+                        <span class="text-[10px] mono bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded-full font-semibold">v1.0</span>
                     </h1>
-                    <p class="text-xs text-slate-400">Web-based Interactive Simulations Engine</p>
+                    <p class="text-xs text-slate-400">Interactive Web Physics & Orbital Mechanics Engine</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <a href="https://github.com/anilsriramdev/Simulator" target="_blank" class="glass-panel px-4 py-2 rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-2 text-slate-300 hover:text-white border border-slate-700/80">
-                    <i class="fa-brands fa-github text-base"></i> View Repository
+            <div class="flex items-center gap-4">
+                <a href="#simulators" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition">
+                    Simulators
+                </a>
+                <a href="#features" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition">
+                    Features
                 </a>
             </div>
         </div>
     </header>
 
     <!-- Hero Section -->
-    <main class="max-w-7xl mx-auto px-6 py-12 flex-1 w-full">
+    <main class="max-w-7xl mx-auto px-6 py-16 flex-1 w-full">
         
-        <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <span class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-widest inline-block">
-                Interactive Web Mechanics
-            </span>
-            <h2 class="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                Explore the Laws of Spacetime & Gravitation
+        <div class="text-center max-w-3xl mx-auto mb-20 space-y-6">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20 uppercase tracking-wider shadow-inner">
+                <i class="fa-solid fa-sparkles text-purple-400"></i> Next-Gen Physics Simulations
+            </div>
+
+            <h2 class="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight">
+                Explore Mechanics & <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-400 to-sky-400">Spacetime Dynamics</span>
             </h2>
-            <p class="text-slate-400 text-sm md:text-base leading-relaxed">
-                Step into interactive real-time visualizers built to model classical mechanics, orbital dynamics, and general relativity field equations.
+
+            <p class="text-slate-300 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
+                Step into interactive real-time visualizers built to model classical mechanics, orbital dynamics, and general relativity field equations with high mathematical precision.
             </p>
+
+            <div class="flex items-center justify-center pt-2">
+                <a href="#simulators" class="px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-purple-500/25 flex items-center gap-2">
+                    <i class="fa-solid fa-play"></i> Launch Simulators
+                </a>
+            </div>
+
+            <!-- Quick Metrics Grid -->
+            <div class="grid grid-cols-3 gap-4 max-w-xl mx-auto pt-8 border-t border-slate-800/80 text-center">
+                <div>
+                    <span class="block text-2xl font-black text-purple-400">3</span>
+                    <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Active Modules</span>
+                </div>
+                <div>
+                    <span class="block text-2xl font-black text-indigo-400">RK4</span>
+                    <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Precision Integrator</span>
+                </div>
+                <div>
+                    <span class="block text-2xl font-black text-sky-400">60 FPS</span>
+                    <span class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Canvas Rendering</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Simulator Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Simulator Section Grid -->
+        <div id="simulators" class="space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-purple-400"></i> Interactive Simulation Labs
+                    </h3>
+                    <p class="text-xs text-slate-400">Choose a physical framework below to begin experimenting</p>
+                </div>
+            </div>
 
-            <!-- Card 1: Newtonian Gravity -->
-            <div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden group">
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <span class="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20 text-xl">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                <!-- Card 1: Newtonian Gravity -->
+                <div class="glass-card glow-blue rounded-3xl overflow-hidden flex flex-col justify-between group">
+                    <div class="h-28 bg-gradient-to-br from-blue-900/40 via-slate-900 to-slate-950 p-5 flex items-start justify-between border-b border-slate-800/80 relative overflow-hidden">
+                        <div class="p-3 bg-blue-500/20 text-blue-400 rounded-2xl border border-blue-500/30 text-2xl relative z-10 shadow-lg shadow-blue-500/10">
                             <i class="fa-solid fa-globe"></i>
-                        </span>
-                        <span class="text-[11px] mono bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-medium">
+                        </div>
+                        <span class="text-[10px] mono bg-slate-900/90 text-blue-300 border border-blue-500/30 px-3 py-1 rounded-full font-semibold relative z-10">
                             Classical Mechanics
                         </span>
+                        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:scale-150 transition"></div>
                     </div>
 
-                    <div>
-                        <h3 class="text-xl font-bold text-white group-hover:text-blue-400 transition mb-2">
-                            Newtonian Gravity Engine
-                        </h3>
-                        <p class="text-xs text-slate-400 leading-relaxed">
-                            Simulate N-body gravitational attraction, orbital trajectories, solar system models, and escape velocities using Newton's inverse-square law: $F = G \frac{m_1 m_2}{r^2}$.
-                        </p>
-                    </div>
+                    <div class="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xl font-extrabold text-white group-hover:text-blue-400 transition mb-2">
+                                Newtonian Gravity Engine
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                                Simulate N-body gravitational attraction, orbital trajectories, solar system dynamics, and escape velocities using Newton's inverse-square equation:
+                            </p>
+                            
+                            <div class="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-center text-xs text-slate-200 mb-4">
+                                $$F = G \frac{m_1 m_2}{r^2}$$
+                            </div>
+                        </div>
 
-                    <div class="flex flex-wrap gap-1.5 text-[10px] text-slate-400 mono">
-                        <span class="bg-slate-900/80 border border-slate-800 px-2 py-0.5 rounded">N-Body System</span>
-                        <span class="bg-slate-900/80 border border-slate-800 px-2 py-0.5 rounded">Orbital Traces</span>
-                        <span class="bg-slate-900/80 border border-slate-800 px-2 py-0.5 rounded">Vector Controls</span>
+                        <div class="space-y-4">
+                            <div class="flex flex-wrap gap-1.5 text-[10px] text-slate-400 mono">
+                                <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">N-Body Simulation</span>
+                                <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">Orbital Traces</span>
+                                <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">Vector Controls</span>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                                <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Lab
+                                </span>
+                                <a href="./simulators/gravity/" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-lg shadow-blue-500/20">
+                                    Launch <i class="fa-solid fa-arrow-right text-xs"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                    <span class="text-xs text-slate-500">Status: <strong class="text-emerald-400 font-semibold">Active</strong></span>
-                    <a href="./simulators/gravity/" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition shadow-md shadow-blue-500/20">
-                        Launch Simulator <i class="fa-solid fa-arrow-right text-xs"></i>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Card 2: General Relativity -->
-            <div class="glass-card rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden group">
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <span class="p-3 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20 text-xl">
-                            <i class="fa-solid fa-circle-nodes"></i>
+                <!-- Card 2: Kepler's Laws -->
+                <div class="glass-card glow-amber rounded-3xl overflow-hidden flex flex-col justify-between group">
+                    <div class="h-28 bg-gradient-to-br from-amber-900/40 via-slate-900 to-slate-950 p-5 flex items-start justify-between border-b border-slate-800/80 relative overflow-hidden">
+                        <div class="p-3 bg-amber-500/20 text-amber-400 rounded-2xl border border-amber-500/30 text-2xl relative z-10 shadow-lg shadow-amber-500/10">
+                            <i class="fa-solid fa-compass-drafting"></i>
+                        </div>
+                        <span class="text-[10px] mono bg-slate-900/90 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full font-semibold relative z-10">
+                            Orbital Mechanics
                         </span>
-                        <span class="text-[11px] mono bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2.5 py-1 rounded-full font-medium">
+                        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:scale-150 transition"></div>
+                    </div>
+
+                    <div class="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xl font-extrabold text-white group-hover:text-amber-400 transition mb-2">
+                                Kepler's Laws Lab
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                                Interactively demonstrate planetary motion laws: elliptical focal paths ($a, e$), equal area swept per time interval, and harmonic period scaling:
+                            </p>
+
+                            <div class="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-center text-xs text-slate-200 mb-4">
+                                $$T^2 = \left(\frac{4\pi^2}{GM}\right)a^3$$
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex flex-wrap gap-1.5 text-[10px] text-slate-400 mono">
+                                <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">Elliptic Foci</span>
+                                <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">Area Sweeps</span>
+                                <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">T²/a³ Harmonic Ratio</span>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                                <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Lab
+                                </span>
+                                <a href="./simulators/kepler/" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-lg shadow-amber-500/20">
+                                    Launch <i class="fa-solid fa-arrow-right text-xs"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: General Relativity -->
+                <div class="glass-card glow-purple rounded-3xl overflow-hidden flex flex-col justify-between group">
+                    <div class="h-28 bg-gradient-to-br from-purple-900/40 via-slate-900 to-slate-950 p-5 flex items-start justify-between border-b border-slate-800/80 relative overflow-hidden">
+                        <div class="p-3 bg-purple-500/20 text-purple-400 rounded-2xl border border-purple-500/30 text-2xl relative z-10 shadow-lg shadow-purple-500/10">
+                            <i class="fa-solid fa-circle-nodes"></i>
+                        </div>
+                        <span class="text-[10px] mono bg-slate-900/90 text-purple-300 border border-purple-500/30 px-3 py-1 rounded-full font-semibold relative z-10">
                             Relativistic Physics
                         </span>
+                        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:scale-150 transition"></div>
                     </div>
 
-                    <div>
-                        <h3 class="text-xl font-bold text-white group-hover:text-purple-400 transition mb-2">
-                            General Relativity & Schwarzschild
-                        </h3>
-                        <p class="text-xs text-slate-400 leading-relaxed">
-                            Visualize spacetime curvature around massive bodies, relativistic perihelion precession (rosette orbits), event horizons, photon spheres, and light ray deflection.
-                        </p>
-                    </div>
+                    <div class="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xl font-extrabold text-white group-hover:text-purple-400 transition mb-2">
+                                General Relativity Engine
+                            </h4>
+                            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                                Visualize spacetime curvature around Schwarzschild black holes, relativistic perihelion precession (rosette orbits), event horizons, and gravitational lensing:
+                            </p>
 
-                    <div class="flex flex-wrap gap-1.5 text-[10px] text-slate-400 mono">
-                        <span class="bg-slate-900/80 border border-slate-800 px-2 py-0.5 rounded">Schwarzschild Geodesics</span>
-                        <span class="bg-slate-900/80 border border-slate-800 px-2 py-0.5 rounded">Photon Sphere</span>
-                        <span class="bg-slate-900/80 border border-slate-800 px-2 py-0.5 rounded">ISCO Orbit</span>
+                            <div class="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-center text-xs text-slate-200 mb-4">
+                                $$r_s = \frac{2GM}{c^2}$$
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex flex-wrap gap-1.5 text-[10px] text-slate-400 mono">
+                                <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">Schwarzschild Geodesics</span>
+                                <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">Photon Sphere</span>
+                                <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">ISCO Limits</span>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                                <span class="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Lab
+                                </span>
+                                <a href="./simulators/general-relativity/" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-lg shadow-purple-500/20">
+                                    Launch <i class="fa-solid fa-arrow-right text-xs"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                    <span class="text-xs text-slate-500">Status: <strong class="text-emerald-400 font-semibold">Active</strong></span>
-                    <a href="./simulators/general-relativity/" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition shadow-md shadow-purple-500/20">
-                        Launch Simulator <i class="fa-solid fa-arrow-right text-xs"></i>
-                    </a>
-                </div>
+            </div>
+        </div>
+
+        <!-- Platform Features Section -->
+        <div id="features" class="mt-28 pt-12 border-t border-slate-800/80">
+            <div class="text-center max-w-2xl mx-auto mb-12">
+                <h3 class="text-2xl font-extrabold text-white tracking-tight mb-2">Engine Architecture & Features</h3>
+                <p class="text-xs text-slate-400">High-performance client-side simulation stack engineered for physics education and research visualizers.</p>
             </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-3">
+                    <div class="text-purple-400 text-xl"><i class="fa-solid fa-microchip"></i></div>
+                    <h4 class="text-sm font-bold text-white">RK4 Integration Engine</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">Utilizes 4th-order Runge-Kutta differential equation solvers for accurate orbital trajectory propagation without numerical energy drift.</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-3">
+                    <div class="text-indigo-400 text-xl"><i class="fa-solid fa-sliders"></i></div>
+                    <h4 class="text-sm font-bold text-white">Interactive Parameter Tuning</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">Adjust masses, velocities, eccentricities, and cosmological constants in real time while tracking live telemetry readout cards.</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-3">
+                    <div class="text-sky-400 text-xl"><i class="fa-solid fa-square-root-variable"></i></div>
+                    <h4 class="text-sm font-bold text-white">MathJax Equation Overlays</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">Embedded LaTeX mathematical breakdowns and theoretical references available directly inside each lab viewport.</p>
+                </div>
+            </div>
         </div>
 
     </main>
 
     <!-- Footer -->
-    <footer class="glass-panel border-t border-slate-800/80 px-6 py-6 text-center text-xs text-slate-500">
-        <p>© Interactive Physics Lab — Powered by HTML5 Canvas, RK4 Integration & GitHub Pages</p>
+    <footer class="glass-panel border-t border-slate-800/80 px-6 py-8 text-center text-xs text-slate-500 space-y-2">
+        <div class="flex items-center justify-center gap-2 text-slate-300 font-semibold text-sm mb-2">
+            <i class="fa-solid fa-atom text-purple-400"></i> Interact Physics
+        </div>
+        <p>© Interact Physics — Powered by HTML5 Canvas & RK4 Numerical Integration</p>
     </footer>
 
 </body>

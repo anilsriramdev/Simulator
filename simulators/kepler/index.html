@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kepler's Laws Lab | Interactive Physics Lab</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- MathJax Configuration & Library -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f1f5f9;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        input[type="range"] {
+            accent-color: #f59e0b;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col justify-between selection:bg-amber-500 selection:text-black">
+
+    <!-- Top Navigation Bar (GR Style) -->
+    <header class="glass-panel sticky top-0 z-50 border-b border-slate-800/80 px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <a href="../../index.html" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition border border-slate-700/80 text-xs font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> Catalog
+            </a>
+            <div class="flex items-center space-x-2.5">
+                <div class="bg-gradient-to-tr from-amber-600 to-orange-600 text-white p-2 rounded-xl shadow-lg shadow-amber-500/20 text-base">
+                    <i class="fa-solid fa-compass-drafting"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-extrabold text-white tracking-tight flex items-center gap-2">
+                        Kepler's Laws Lab
+                        <span class="text-[10px] mono bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-medium">Orbital Mechanics</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400">Elliptical Orbits, Area Sweeps & Harmonic Ratios</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 text-xs">
+            <!-- Start / Pause -->
+            <button id="btn-toggle-sim" class="px-3.5 py-1.5 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30 transition flex items-center gap-1.5 shadow-md shadow-emerald-500/20">
+                <i class="fa-solid fa-play"></i> <span id="lbl-start">Start</span>
+            </button>
+
+            <!-- Reset -->
+            <button id="btn-reset" class="px-3.5 py-1.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-right"></i> Reset
+            </button>
+
+            <!-- Header Preset Dropdown (Styled readable background) -->
+            <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1">
+                <i class="fa-solid fa-sliders text-amber-400"></i>
+                <select id="preset-select" class="bg-slate-900 text-slate-200 outline-none text-xs font-medium cursor-pointer py-0.5"></select>
+            </div>
+
+            <!-- Grid Overlay Toggle -->
+            <button id="btn-toggle-grid" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-border-all"></i> Polar Grid
+            </button>
+
+            <!-- Formulas Modal Button -->
+            <button id="btn-open-formulas" class="px-3 py-1.5 rounded-xl font-semibold bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-graduation-cap text-sm"></i> Kepler Equations
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Left Controls Sidebar -->
+        <aside class="w-80 glass-panel border-r border-slate-800/80 p-5 flex flex-col gap-5 overflow-y-auto z-10">
+            <div>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> Orbital Parameters
+                </h2>
+
+                <div class="space-y-4 text-xs">
+                    <div>
+                        <div class="flex justify-between text-slate-300 mb-1">
+                            <span>Semi-Major Axis ($a$)</span>
+                            <span id="val-a" class="mono font-semibold text-amber-400"></span>
+                        </div>
+                        <input type="range" id="semi-major-axis" class="w-full bg-slate-800 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-300 mb-1">
+                            <span>Eccentricity ($e$)</span>
+                            <span id="val-e" class="mono font-semibold text-amber-400"></span>
+                        </div>
+                        <input type="range" id="eccentricity" class="w-full bg-slate-800 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-300 mb-1">
+                            <span>Simulation Speed</span>
+                            <span id="val-speed" class="mono font-semibold text-amber-400"></span>
+                        </div>
+                        <input type="range" id="sim-speed" class="w-full bg-slate-800 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-300 mb-1">
+                            <span>Orbit Path Trail Length</span>
+                            <span id="val-trail" class="mono font-semibold text-amber-400"></span>
+                        </div>
+                        <input type="range" id="trail-length" class="w-full bg-slate-800 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-slate-800/80">
+
+            <!-- Visual Feature Overlays -->
+            <div>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i> Visual Overlays
+                </h2>
+
+                <div class="space-y-2.5 text-xs text-slate-300">
+                    <label class="flex items-center gap-2.5 cursor-pointer hover:text-white">
+                        <input type="checkbox" id="show-orbit-path" checked class="rounded border-slate-700 text-amber-500 focus:ring-0">
+                        <span>Show Full Elliptical Path</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 cursor-pointer hover:text-white">
+                        <input type="checkbox" id="show-swept-area" checked class="rounded border-slate-700 text-amber-500 focus:ring-0">
+                        <span>Law 2: Equal Area Sweeps</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 cursor-pointer hover:text-white">
+                        <input type="checkbox" id="show-vectors" checked class="rounded border-slate-700 text-amber-500 focus:ring-0">
+                        <span>Show Velocity & Force Vectors</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 cursor-pointer hover:text-white">
+                        <input type="checkbox" id="show-foci" checked class="rounded border-slate-700 text-amber-500 focus:ring-0">
+                        <span>Show Focal Points (Law 1)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Focus Summary Card -->
+            <div class="mt-auto bg-slate-950/80 border border-slate-800/80 rounded-xl p-3.5 space-y-1.5 text-xs">
+                <div class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">Orbital Geometry</div>
+                <div class="flex justify-between"><span class="text-slate-400">Perihelion ($q$):</span> <span id="val-perihelion" class="mono text-emerald-400 font-medium">0 AU</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Aphelion ($Q$):</span> <span id="val-aphelion" class="mono text-orange-400 font-medium">0 AU</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Focal Distance ($c$):</span> <span id="val-focal-dist" class="mono text-slate-300 font-medium">0 AU</span></div>
+            </div>
+        </aside>
+
+        <!-- Viewport Canvas Area -->
+        <main class="flex-1 h-full w-full relative bg-slate-950">
+            <!-- Floating Top Coordinates Label -->
+            <div class="absolute top-4 left-4 z-10 glass-panel px-3.5 py-2 rounded-xl text-xs border border-slate-800/80 flex items-center gap-2.5">
+                <i class="fa-solid fa-atom text-amber-400"></i>
+                <div>
+                    <span class="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">Coordinate Frame</span>
+                    <span class="font-bold text-slate-200">Heliocentric Polar Coordinates</span>
+                </div>
+            </div>
+
+            <!-- Floating Right Zoom Controls -->
+            <div class="absolute top-4 right-4 z-10 glass-panel p-1.5 rounded-xl border border-slate-800/80 flex flex-col gap-1 text-slate-300">
+                <button id="btn-zoom-in" class="p-2 hover:bg-slate-800 hover:text-amber-400 rounded-lg transition" title="Zoom In">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                </button>
+                <button id="btn-zoom-out" class="p-2 hover:bg-slate-800 hover:text-amber-400 rounded-lg transition" title="Zoom Out">
+                    <i class="fa-solid fa-minus text-sm"></i>
+                </button>
+                <button id="btn-zoom-reset" class="p-2 hover:bg-slate-800 hover:text-amber-400 rounded-lg transition" title="Reset View">
+                    <i class="fa-solid fa-expand text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Canvas element -->
+            <canvas id="sim-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+
+            <!-- Bottom Floating Telemetry Cards (GR Style) -->
+            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-4 pointer-events-none">
+                <div class="glass-panel px-5 py-3 rounded-2xl border border-slate-800/90 shadow-2xl flex flex-col">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Orbital Period ($T$)</span>
+                    <span id="telemetry-period" class="text-lg font-black mono text-amber-400">0.00 yrs</span>
+                </div>
+                <div class="glass-panel px-5 py-3 rounded-2xl border border-slate-800/90 shadow-2xl flex flex-col">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Harmonic Ratio ($T^2 / a^3$)</span>
+                    <span id="telemetry-ratio" class="text-lg font-black mono text-emerald-400">1.000</span>
+                </div>
+                <div class="glass-panel px-5 py-3 rounded-2xl border border-slate-800/90 shadow-2xl flex flex-col">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Current Speed</span>
+                    <span id="telemetry-speed" class="text-lg font-black mono text-sky-400">0.00 km/s</span>
+                </div>
+                <div class="glass-panel px-5 py-3 rounded-2xl border border-slate-800/90 shadow-2xl flex flex-col">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Radial Distance ($r$)</span>
+                    <span id="telemetry-distance" class="text-lg font-black mono text-purple-400">0.00 AU</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Formulas & Equations Modal -->
+    <div id="modal-formulas" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel max-w-2xl w-full rounded-2xl border border-slate-700/80 p-6 space-y-6 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-amber-500/10 text-amber-400 p-2.5 rounded-xl border border-amber-500/20 text-xl">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Kepler's Laws of Planetary Motion</h3>
+                        <p class="text-xs text-slate-400">Mathematical Framework of Celestial Mechanics</p>
+                    </div>
+                </div>
+                <button id="btn-close-formulas" class="text-slate-400 hover:text-white text-lg p-2 rounded-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs text-slate-300 overflow-y-auto max-h-[60vh] pr-2">
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-amber-400 flex items-center gap-2">
+                        <span>1st Law: Law of Ellipses</span>
+                    </h4>
+                    <p class="text-slate-400 leading-relaxed">
+                        The orbit of a planet is an ellipse with the Sun located at one of the two foci.
+                    </p>
+                    <div class="text-center py-2 text-sm text-slate-100 bg-slate-950/80 rounded-lg border border-slate-800/80">
+                        $$r(\theta) = \frac{a(1 - e^2)}{1 + e \cos\theta}$$
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-amber-400 flex items-center gap-2">
+                        <span>2nd Law: Law of Equal Areas</span>
+                    </h4>
+                    <p class="text-slate-400 leading-relaxed">
+                        A line segment joining a planet and the Sun sweeps out equal areas during equal intervals of time due to conservation of angular momentum $L$.
+                    </p>
+                    <div class="text-center py-2 text-sm text-slate-100 bg-slate-950/80 rounded-lg border border-slate-800/80">
+                        $$\frac{dA}{dt} = \frac{L}{2m} = \text{constant}$$
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-amber-400 flex items-center gap-2">
+                        <span>3rd Law: Law of Harmonics</span>
+                    </h4>
+                    <p class="text-slate-400 leading-relaxed">
+                        The square of the orbital period $T$ of a planet is directly proportional to the cube of the semi-major axis $a$ of its orbit.
+                    </p>
+                    <div class="text-center py-2 text-sm text-slate-100 bg-slate-950/80 rounded-lg border border-slate-800/80">
+                        $$T^2 = \left(\frac{4\pi^2}{G M_\odot}\right) a^3 \implies \frac{T^2}{a^3} = 1.00 \quad [\text{Solar Units}]$$
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="kepler.js"></script>
+</body>
+</html>

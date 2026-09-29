@@ -75,6 +75,13 @@
             box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
         }
         .katex { font-size: 0.95em; }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col select-none overflow-hidden">
@@ -91,7 +98,6 @@
             <div>
                 <h1 class="font-bold text-base tracking-wide text-white flex items-center gap-2">
                     Newtonian Gravity Simulator
-                    <span class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-normal">High School Physics Lab</span>
                 </h1>
                 <p class="text-xs text-slate-400">Verlet Integration Orbital Mechanics & Collision Engine</p>
             </div>
@@ -144,21 +150,23 @@
     <!-- Main Content Area -->
     <div class="flex-1 flex relative overflow-hidden">
 
-        <!-- Left Sidebar: Inspector & Physics Configuration Panel -->
-        <aside class="w-80 glass-panel border-r border-slate-800 flex flex-col z-10 shrink-0 overflow-y-auto">
-            <div class="p-3.5 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
+        <!-- Left Sidebar: Body Inspector Panel -->
+        <aside class="w-80 glass-panel border-r border-slate-800 flex flex-col h-full z-10 shrink-0 overflow-hidden">
+            <!-- Fixed Panel Header -->
+            <div class="p-3.5 border-b border-slate-800 flex justify-between items-center bg-slate-900/40 shrink-0">
                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                     <i class="fa-solid fa-sliders text-indigo-400"></i> Body Inspector
                 </h2>
                 <span id="body-selector-count" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">2 Bodies</span>
             </div>
 
-            <!-- Body Tabs -->
-            <div class="p-3 border-b border-slate-800 flex gap-2 overflow-x-auto" id="body-tabs-container">
+            <!-- Body Tabs Container (Horizontal Scrolling Only) -->
+            <div class="p-3 border-b border-slate-800 flex gap-2 overflow-x-auto overflow-y-hidden no-scrollbar shrink-0" id="body-tabs-container">
                 <!-- Tabs generated dynamically -->
             </div>
 
-            <div class="p-4 space-y-4 text-xs flex-1">
+            <!-- Scrollable Body Controls Body -->
+            <div class="p-4 space-y-4 text-xs flex-1 overflow-y-auto">
                 <!-- Selected Body Controls -->
                 <div id="body-controls-content" class="space-y-4">
                     <div>
