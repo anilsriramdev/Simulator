@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://anilsriramdev.github.io/Simulator/sitemap.xml
+Sitemap: https://interactphysics.com/sitemap.xml
