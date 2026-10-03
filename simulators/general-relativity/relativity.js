@@ -14,6 +14,7 @@ const state = {
     massSolar: 10,           // Black hole mass in solar masses (M☉)
     particleType: 'massive', // 'massive' or 'photon'
     initialSpeedC: 0.18,     // Speed relative to c
+    simSpeed: 1.0,           // Simulation time speed multiplier
     trailMaxLength: 3000,    // Path trajectory history
     showGrid: true,
     showHorizons: true,
@@ -115,7 +116,6 @@ function loadPreset(presetKey) {
             state.massSolar = 10;
             state.initialSpeedC = 1.0;
             
-            // Aim precisely at critical impact parameter b_crit
             const startR = 12.0 * rs;
             const impactParameter = radii.bCrit * 1.001; 
             const vr = -C * Math.sqrt(Math.max(0, 1 - Math.pow(impactParameter / startR, 2)));
@@ -183,23 +183,19 @@ function physicsStep(dt) {
     const GM = G * radii.M;
     const p = state.particle;
 
-    // Check if particle crosses event horizon
     if (p.r <= radii.rs) {
         state.running = false;
         return;
     }
 
-    // Dynamic Geodesic Equations of Motion
     const derivatives = (r, vr, vphi) => {
         const L = r * r * vphi;
         let ar = 0;
         
         if (state.particleType === 'photon') {
-            // Photon Geodesic: d^2r/d\tau^2 = r*(vphi^2) - (3*GM*L^2)/(c^2 * r^4) * alpha
             const grTerm = (3 * GM * L * L) / (C * C * Math.pow(r, 4)) * state.alpha;
             ar = r * vphi * vphi - grTerm;
         } else {
-            // Massive Particle Geodesic with GR Precession Term
             const grTerm = (3 * GM * L * L) / (C * C * Math.pow(r, 4)) * state.alpha;
             ar = r * vphi * vphi - (GM / (r * r)) + grTerm;
         }
@@ -210,7 +206,6 @@ function physicsStep(dt) {
 
     const oldVr = p.vr;
 
-    // RK4 Integration
     const k1 = derivatives(p.r, p.vr, p.vphi);
     const k2 = derivatives(p.r + 0.5 * dt * k1.vr, p.vr + 0.5 * dt * k1.ar, p.vphi + 0.5 * dt * k1.aphi);
     const k3 = derivatives(p.r + 0.5 * dt * k2.vr, p.vr + 0.5 * dt * k2.ar, p.vphi + 0.5 * dt * k2.aphi);
@@ -221,7 +216,6 @@ function physicsStep(dt) {
     p.vr += (dt / 6) * (k1.ar + 2 * k2.ar + 2 * k3.ar + k4.ar);
     p.vphi += (dt / 6) * (k1.aphi + 2 * k2.aphi + 2 * k3.aphi + k4.aphi);
 
-    // Dynamic Periapsis Detector (vr switches from negative to positive)
     if (oldVr < 0 && p.vr >= 0 && state.particleType === 'massive') {
         const currentPhi = p.phi;
         if (state.lastPeriapsisPhi !== null) {
@@ -244,6 +238,12 @@ function physicsStep(dt) {
  * Synchronize UI inputs dynamically with state
  */
 function syncControlsWithState() {
+    const sliderSimSpeed = document.getElementById('slider-sim-speed');
+    if (sliderSimSpeed) {
+        sliderSimSpeed.value = state.simSpeed;
+        document.getElementById('disp-sim-speed').innerText = `${state.simSpeed.toFixed(1)}x`;
+    }
+
     const sliderAlpha = document.getElementById('slider-alpha');
     if (sliderAlpha) {
         sliderAlpha.value = state.alpha;
@@ -275,9 +275,6 @@ function syncControlsWithState() {
     }
 }
 
-/**
- * Recalculate particle angular velocity dynamically from slider speed input
- */
 function updateParticleSpeed() {
     if (!state.particle) return;
     const speed = state.initialSpeedC * C;
@@ -287,9 +284,6 @@ function updateParticleSpeed() {
     state.precessionShiftDeg = 0.0;
 }
 
-/**
- * Coordinate System Transformations
- */
 function worldToScreen(wx, wy) {
     const radii = getSchwarzschildRadii();
     const baseRadius = Math.min(canvas.width, canvas.height) / 22;
@@ -299,9 +293,6 @@ function worldToScreen(wx, wy) {
     return { x: sx, y: sy };
 }
 
-/**
- * Canvas Render Loop
- */
 function render() {
     ctx.fillStyle = '#030712';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -312,7 +303,6 @@ function render() {
     if (state.showGrid) drawSpacetimeGrid(center, radii);
     if (state.showHorizons) drawCriticalHorizons(center, radii);
 
-    // Dynamic Trail Rendering
     if (state.trail.length > 1) {
         ctx.beginPath();
         const start = worldToScreen(state.trail[0].x, state.trail[0].y);
@@ -326,7 +316,6 @@ function render() {
         ctx.stroke();
     }
 
-    // Dynamic Particle Renderer
     if (state.particle) {
         const pos = state.particle.Cartesian;
         const pScreen = worldToScreen(pos.x, pos.y);
@@ -345,14 +334,12 @@ function drawCriticalHorizons(center, radii) {
     const baseRadius = Math.min(canvas.width, canvas.height) / 22;
     const scale = (baseRadius / radii.rs) * state.zoom;
 
-    // ISCO Boundary (3.0 r_s)
     ctx.beginPath();
     ctx.arc(center.x, center.y, radii.rISCO * scale, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
     ctx.setLineDash([4, 4]);
     ctx.stroke();
 
-    // Photon Sphere Boundary (1.5 r_s)
     ctx.beginPath();
     ctx.arc(center.x, center.y, radii.rPhoton * scale, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)';
@@ -360,7 +347,6 @@ function drawCriticalHorizons(center, radii) {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Event Horizon Boundary (1.0 r_s)
     ctx.beginPath();
     ctx.arc(center.x, center.y, radii.rs * scale, 0, Math.PI * 2);
     ctx.fillStyle = '#000000';
@@ -390,13 +376,9 @@ function drawSpacetimeGrid(center, radii) {
     }
 }
 
-/**
- * Single Unified Dynamic Telemetry Dashboard Updater
- */
 function updateUI() {
     const radii = getSchwarzschildRadii();
 
-    // Critical Boundaries dynamically calculated in km from active Mass
     const elRs = document.getElementById('disp-rs');
     const elRPhoton = document.getElementById('disp-rphoton');
     const elRISCO = document.getElementById('disp-risco');
@@ -408,22 +390,18 @@ function updateUI() {
     if (state.particle) {
         const rRatio = state.particle.r / radii.rs;
         
-        // Radial Distance Telemetry
         const elHudR = document.querySelectorAll('#hud-r-rs');
         elHudR.forEach(el => el.innerText = `${rRatio.toFixed(2)} rₛ`);
 
-        // Time Dilation
         const elHudDilation = document.querySelectorAll('#hud-time-dilation');
         const dilation = rRatio > 1.0 ? (1 / Math.sqrt(1 - 1 / rRatio)).toFixed(2) : '∞';
         elHudDilation.forEach(el => el.innerText = `${dilation}x slower`);
 
-        // Effective Potential
         const elHudVeff = document.querySelectorAll('#hud-veff, #hud-potential');
         const L = state.particle.r * state.particle.vphi;
         const veff = -(G * radii.M / state.particle.r) + (L * L) / (2 * Math.pow(state.particle.r, 2)) - (G * radii.M * L * L) / (C * C * Math.pow(state.particle.r, 3));
         elHudVeff.forEach(el => el.innerText = `${(veff / (C * C)).toFixed(2)} c²`);
 
-        // Real-time Precession Shift
         const elHudPrecession = document.querySelectorAll('#hud-precession');
         elHudPrecession.forEach(el => el.innerText = `${state.precessionShiftDeg.toFixed(1)}° / orbit`);
     }
@@ -438,7 +416,7 @@ function renderKaTeX() {
 }
 
 /**
- * Initialize Event Listeners
+ * Initialize Event Listeners (including Touch / Pointer Events for Canvas Dragging)
  */
 function setupEventListeners() {
     window.addEventListener('resize', () => {
@@ -461,18 +439,28 @@ function setupEventListeners() {
         state.zoom = e.deltaY < 0 ? Math.min(state.zoom * 1.1, 10.0) : Math.max(state.zoom / 1.1, 0.1);
     }, { passive: false });
 
-    canvas.addEventListener('mousedown', (e) => {
+    // Unified Pointer Events (Supports Mouse, Touch, and Stylus dragging seamlessly on Mobile)
+    canvas.addEventListener('pointerdown', (e) => {
         state.isDragging = true;
         state.dragStart = { x: e.clientX - state.panOffset.x, y: e.clientY - state.panOffset.y };
+        canvas.setPointerCapture(e.pointerId);
     });
 
-    window.addEventListener('mousemove', (e) => {
+    canvas.addEventListener('pointermove', (e) => {
         if (!state.isDragging) return;
         state.panOffset.x = e.clientX - state.dragStart.x;
         state.panOffset.y = e.clientY - state.dragStart.y;
     });
 
-    window.addEventListener('mouseup', () => state.isDragging = false);
+    canvas.addEventListener('pointerup', (e) => {
+        state.isDragging = false;
+        try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
+    });
+
+    canvas.addEventListener('pointercancel', (e) => {
+        state.isDragging = false;
+        try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
+    });
 
     document.getElementById('btn-play').onclick = () => {
         state.running = !state.running;
@@ -485,6 +473,11 @@ function setupEventListeners() {
 
     document.getElementById('preset-select').onchange = (e) => {
         loadPreset(e.target.value);
+    };
+
+    document.getElementById('slider-sim-speed').oninput = (e) => {
+        state.simSpeed = parseFloat(e.target.value);
+        document.getElementById('disp-sim-speed').innerText = `${state.simSpeed.toFixed(1)}x`;
     };
 
     document.getElementById('slider-alpha').oninput = (e) => {
@@ -518,15 +511,45 @@ function setupEventListeners() {
         renderKaTeX();
     };
     document.getElementById('btn-close-math').onclick = () => mathModal.classList.add('hidden');
+
+    const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+    const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+    const sidebarPanel = document.getElementById('sidebar-panel');
+    const presetSelectMobile = document.getElementById('preset-select-mobile');
+    const presetSelectDesktop = document.getElementById('preset-select');
+
+    if (btnToggleSidebar) {
+        btnToggleSidebar.addEventListener('click', () => {
+            sidebarPanel.classList.toggle('-translate-x-full');
+        });
+    }
+    if (btnCloseSidebar) {
+        btnCloseSidebar.addEventListener('click', () => {
+            sidebarPanel.classList.add('-translate-x-full');
+        });
+    }
+
+    const handlePresetChange = (val) => {
+        if (presetSelectDesktop) presetSelectDesktop.value = val;
+        if (presetSelectMobile) presetSelectMobile.value = val;
+        loadPreset(val);
+    };
+
+    if (presetSelectDesktop) {
+        presetSelectDesktop.onchange = (e) => handlePresetChange(e.target.value);
+    }
+    if (presetSelectMobile) {
+        presetSelectMobile.onchange = (e) => handlePresetChange(e.target.value);
+    }
 }
 
 /**
- * Dynamic Main Loop
+ * Dynamic Main Loop (scaled by simSpeed multiplier)
  */
 function animate() {
     if (state.running) {
         const radii = getSchwarzschildRadii();
-        const dt = (radii.rs / C) * 0.15;
+        const dt = (radii.rs / C) * 0.15 * state.simSpeed;
         for (let i = 0; i < 10; i++) {
             physicsStep(dt);
         }

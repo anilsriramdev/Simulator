@@ -1,5 +1,6 @@
 /**
  * Newtonian Physics & Celestial Mechanics Engine
+ * Mobile Touch & High-DPI Display Optimized
  */
 
 // Standard SI Physical Constants
@@ -22,13 +23,19 @@ const state = {
     elapsedSeconds: 0,
     zoom: 1.0,              // AU visible scale
     panOffset: { x: 0, y: 0 },
-    selectedBodyIndex: 1,    // Selected body for inspector & telemetry
+    selectedBodyIndex: 1,   // Selected body for inspector & telemetry
     bodies: [],
     isDragging: false,
     dragTarget: null,       
     dragType: null,         // 'body' or 'pan'
-    lastMousePos: { x: 0, y: 0 }
+    lastMousePos: { x: 0, y: 0 },
+    dpr: 1                  // Device Pixel Ratio
 };
+
+// Touch Gestures State
+let activeTouches = [];
+let initialPinchDistance = null;
+let initialZoomOnPinch = 1.0;
 
 // Canvas Context
 let canvas, ctx;
@@ -145,7 +152,6 @@ function computeAccelerations() {
             const dx = b2.x - b1.x;
             const dy = b2.y - b1.y;
             
-            // Gravitational Softening to avoid division by zero or infinite acceleration spikes
             const softening = state.collisionMode === 'ghost' ? 1e9 : 1e6;
             const distSq = dx * dx + dy * dy + softening;
             const dist = Math.sqrt(distSq);
@@ -173,7 +179,8 @@ function computeAccelerations() {
 function handleCollisions() {
     if (state.collisionMode === 'ghost') return;
 
-    const scale = (canvas.width / 2) / (state.zoom * AU);
+    const canvasWidth = canvas.width / state.dpr;
+    const scale = (canvasWidth / 2) / (state.zoom * AU);
 
     for (let i = 0; i < state.bodies.length; i++) {
         for (let j = i + 1; j < state.bodies.length; j++) {
@@ -184,13 +191,11 @@ function handleCollisions() {
             const dy = b2.y - b1.y;
             const distMeters = Math.sqrt(dx * dx + dy * dy);
 
-            // Threshold physical / visual radius contact distance
             const visualRadiusMeters = (b1.radius + b2.radius) / scale;
             const collisionDist = Math.max(visualRadiusMeters, 1e8);
 
             if (distMeters < collisionDist) {
                 if (state.collisionMode === 'merge') {
-                    // Inelastic Collision: Combine into single mass (Conservation of Momentum)
                     const primary = b1.mass >= b2.mass ? b1 : b2;
                     const secondary = b1.mass >= b2.mass ? b2 : b1;
 
@@ -200,7 +205,6 @@ function handleCollisions() {
                     primary.mass = totalMass;
                     primary.radius = Math.min(30, primary.radius + 2);
 
-                    // Remove secondary body
                     const removeIdx = state.bodies.indexOf(secondary);
                     if (removeIdx > -1) {
                         state.bodies.splice(removeIdx, 1);
@@ -210,10 +214,9 @@ function handleCollisions() {
                     }
                     updateBodyTabsUI();
                     updateInspectorUI();
-                    return; // Exit loop after array mutation
+                    return;
                 }
                 else if (state.collisionMode === 'bounce') {
-                    // 2D Elastic Impulsive Bounce Response
                     const nx = dx / distMeters;
                     const ny = dy / distMeters;
 
@@ -241,7 +244,6 @@ function handleCollisions() {
 function physicsStep(dt) {
     const numBodies = state.bodies.length;
 
-    // Step 1: Update positions
     for (let i = 0; i < numBodies; i++) {
         const b = state.bodies[i];
         if (b.isFixed) continue;
@@ -258,11 +260,9 @@ function physicsStep(dt) {
     const oldAx = state.bodies.map(b => b.ax);
     const oldAy = state.bodies.map(b => b.ay);
 
-    // Step 2: Compute updated accelerations & collisions
     computeAccelerations();
     handleCollisions();
 
-    // Step 3: Update velocities
     for (let i = 0; i < state.bodies.length; i++) {
         const b = state.bodies[i];
         if (b.isFixed) continue;
@@ -275,19 +275,36 @@ function physicsStep(dt) {
 }
 
 /**
- * Coordinates Conversion
+ * Determine the camera/grid anchor point (fixed body like the Sun, or origin)
+ */
+function getCameraAnchor() {
+    const fixedBody = state.bodies.find(b => b.isFixed);
+    if (fixedBody) return fixedBody;
+    return { x: 0, y: 0 };
+}
+
+/**
+ * Coordinates Conversion (DPR aware)
  */
 function worldToScreen(wx, wy) {
-    const scale = (canvas.width / 2) / (state.zoom * AU);
-    const sx = canvas.width / 2 + (wx * scale) + state.panOffset.x;
-    const sy = canvas.height / 2 - (wy * scale) + state.panOffset.y;
+    const canvasWidth = canvas.width / state.dpr;
+    const canvasHeight = canvas.height / state.dpr;
+    const scale = (canvasWidth / 2) / (state.zoom * AU);
+    const anchor = getCameraAnchor();
+
+    const sx = canvasWidth / 2 + ((wx - anchor.x) * scale) + state.panOffset.x;
+    const sy = canvasHeight / 2 - ((wy - anchor.y) * scale) + state.panOffset.y;
     return { x: sx, y: sy };
 }
 
 function screenToWorld(sx, sy) {
-    const scale = (canvas.width / 2) / (state.zoom * AU);
-    const wx = (sx - canvas.width / 2 - state.panOffset.x) / scale;
-    const wy = -(sy - canvas.height / 2 - state.panOffset.y) / scale;
+    const canvasWidth = canvas.width / state.dpr;
+    const canvasHeight = canvas.height / state.dpr;
+    const scale = (canvasWidth / 2) / (state.zoom * AU);
+    const anchor = getCameraAnchor();
+
+    const wx = anchor.x + (sx - canvasWidth / 2 - state.panOffset.x) / scale;
+    const wy = anchor.y - (sy - canvasHeight / 2 - state.panOffset.y) / scale;
     return { x: wx, y: wy };
 }
 
@@ -295,10 +312,16 @@ function screenToWorld(sx, sy) {
  * Main Render Frame
  */
 function render() {
-    ctx.fillStyle = '#050811';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const logicalWidth = canvas.width / state.dpr;
+    const logicalHeight = canvas.height / state.dpr;
 
-    if (state.showGrid) drawGrid();
+    ctx.save();
+    ctx.scale(state.dpr, state.dpr);
+
+    ctx.fillStyle = '#050811';
+    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+
+    if (state.showGrid) drawGrid(logicalWidth, logicalHeight);
     if (state.showTrails) drawTrails();
 
     // Render Bodies
@@ -341,44 +364,63 @@ function render() {
         ctx.textAlign = 'center';
         ctx.fillText(b.name, pos.x, pos.y + b.radius + 14);
 
-        // Velocity & Force Vectors
         if (state.showVectors) {
             drawBodyVectors(b, pos);
         }
     }
 
-    // Distance Line indicator between central body and selected body
     if (state.bodies.length > 1) {
         const refIdx = state.selectedBodyIndex === 0 ? 1 : 0;
         if (state.bodies[refIdx]) {
             drawDistanceRuler(state.bodies[refIdx], state.bodies[state.selectedBodyIndex]);
         }
     }
+
+    ctx.restore();
 }
 
-function drawGrid() {
+function drawGrid(width, height) {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
     ctx.lineWidth = 1;
 
-    const gridStep = 50;
-    const startX = state.panOffset.x % gridStep;
-    const startY = state.panOffset.y % gridStep;
+    const gridStepPixels = 50;
+    const anchor = getCameraAnchor();
+    
+    // Find world coordinate boundaries of the current viewport
+    const topLeft = screenToWorld(0, 0);
+    const bottomRight = screenToWorld(width, height);
+
+    const canvasWidth = canvas.width / state.dpr;
+    const scale = (canvasWidth / 2) / (state.zoom * AU);
+    const worldGridStep = gridStepPixels / scale;
+
+    const startWx = Math.floor(topLeft.x / worldGridStep) * worldGridStep;
+    const endWx = Math.ceil(bottomRight.x / worldGridStep) * worldGridStep;
+    const startWy = Math.floor(bottomRight.y / worldGridStep) * worldGridStep;
+    const endWy = Math.ceil(topLeft.y / worldGridStep) * worldGridStep;
 
     ctx.beginPath();
-    for (let x = startX; x < canvas.width; x += gridStep) {
-        ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
+    for (let wx = startWx; wx <= endWx; wx += worldGridStep) {
+        const p1 = worldToScreen(wx, startWy);
+        const p2 = worldToScreen(wx, endWy);
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
     }
-    for (let y = startY; y < canvas.height; y += gridStep) {
-        ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+    for (let wy = startWy; wy <= endWy; wy += worldGridStep) {
+        const p1 = worldToScreen(startWx, wy);
+        const p2 = worldToScreen(endWx, wy);
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
     }
     ctx.stroke();
 
-    // World Axis Crosshair
-    const center = worldToScreen(0, 0);
-    ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+    // Draw central anchor crosshairs perfectly locked onto the anchor body
+    const center = worldToScreen(anchor.x, anchor.y);
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.25)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(center.x, 0); ctx.lineTo(center.x, canvas.height);
-    ctx.moveTo(0, center.y); ctx.lineTo(canvas.width, center.y);
+    ctx.moveTo(center.x, 0); ctx.lineTo(center.x, height);
+    ctx.moveTo(0, center.y); ctx.lineTo(width, center.y);
     ctx.stroke();
 }
 
@@ -405,13 +447,11 @@ function drawTrails() {
 }
 
 function drawBodyVectors(b, pos) {
-    // Velocity Vector (Green)
     const vScale = 0.002;
     const vxEnd = pos.x + b.vx * vScale;
     const vyEnd = pos.y - b.vy * vScale;
     drawArrow(pos.x, pos.y, vxEnd, vyEnd, '#10b981', 'v');
 
-    // Force Vector (Amber)
     const aScale = 5000;
     const axEnd = pos.x + b.ax * aScale;
     const ayEnd = pos.y - b.ay * aScale;
@@ -477,36 +517,30 @@ function drawDistanceRuler(b1, b2) {
 
 /**
  * Update Dynamic HUD Telemetry
- * Handles relative reference body calculation so Sun or central bodies never yield NaN or Infinity
  */
 function updateHUD() {
-    // Elapsed Time
     const days = Math.floor(state.elapsedSeconds / DAY_SEC);
     const hours = Math.floor((state.elapsedSeconds % DAY_SEC) / 3600);
     document.getElementById('hud-time').innerText = `${days.toString().padStart(3, '0')} Days, ${hours.toString().padStart(2, '0')} Hrs`;
 
     if (state.bodies.length === 0) return;
 
-    // Target body
     const targetIdx = Math.min(state.selectedBodyIndex, state.bodies.length - 1);
     const targetBody = state.bodies[targetIdx];
 
-    // Reference body: If Sun (body 0) is selected, measure relative to body 1. Otherwise measure relative to body 0.
     let refIdx = 0;
     if (targetIdx === 0 && state.bodies.length > 1) {
         refIdx = 1;
     }
     const refBody = state.bodies[refIdx];
 
-    document.getElementById('hud-target-label').innerHTML = `<i class="fa-solid fa-crosshairs"></i> Telemetry for: <span class="text-white">${targetBody.name}</span> (Relative to ${refBody.name})`;
+    document.getElementById('hud-target-label').innerHTML = `<i class="fa-solid fa-crosshairs shrink-0"></i> Telemetry for: <span class="text-white">${targetBody.name}</span> (Relative to ${refBody.name})`;
 
-    // Calculate relative distance r
     const dx = targetBody.x - refBody.x;
     const dy = targetBody.y - refBody.y;
     const distMeters = Math.sqrt(dx * dx + dy * dy);
     const distAu = distMeters / AU;
 
-    // Prevent division by zero
     const effectiveG = REAL_G * state.gFactor;
     
     let force = 0;
@@ -519,7 +553,6 @@ function updateHUD() {
     const ke = targetBody.getKineticEnergy();
     const totalE = ke + pe;
 
-    // Display in HUD safely
     document.getElementById('hud-force').innerText = formatScientific(force) + ' N';
     document.getElementById('hud-dist').innerText = `${distAu.toFixed(3)} AU`;
     document.getElementById('hud-dist-km').innerText = `${(distMeters / 1e9).toFixed(2)} Million km`;
@@ -529,9 +562,6 @@ function updateHUD() {
     document.getElementById('disp-zoom').innerText = `${state.zoom.toFixed(2)} AU`;
 }
 
-/**
- * Robust Scientific Notation Formatter with NaN / Infinity Guards
- */
 function formatScientific(val) {
     if (!isFinite(val) || isNaN(val) || Math.abs(val) === 0) {
         return '0.00';
@@ -546,9 +576,6 @@ function toSuperscript(num) {
     return num.toString().split('').map(c => map[c] || c).join('');
 }
 
-/**
- * Render KaTeX Equations Across HTML
- */
 function renderKaTeX() {
     if (typeof katex === 'undefined') return;
 
@@ -574,9 +601,6 @@ function renderKaTeX() {
     });
 }
 
-/**
- * UI Inspector Synchronizer
- */
 function updateBodyTabsUI() {
     const container = document.getElementById('body-tabs-container');
     if (!container) return;
@@ -587,13 +611,13 @@ function updateBodyTabsUI() {
         const tab = document.createElement('button');
         const isSelected = idx === state.selectedBodyIndex;
         
-        tab.className = `py-2 px-3.5 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap shrink-0 transition-all duration-200 ${
+        tab.className = `py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap shrink-0 transition-all duration-200 ${
             isSelected 
                 ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/60 shadow-sm shadow-indigo-500/25 ring-1 ring-indigo-500/30' 
                 : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-slate-200 hover:bg-slate-800 hover:border-slate-700'
         }`;
         
-        tab.innerHTML = `<span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${b.color}; box-shadow: 0 0 6px ${b.color}"></span> ${b.name}`;
+        tab.innerHTML = `<span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${b.color}; box-shadow: 0 0 6px ${b.color}"></span> ${b.name}`;
         
         tab.onclick = () => {
             state.selectedBodyIndex = idx;
@@ -604,7 +628,6 @@ function updateBodyTabsUI() {
         container.appendChild(tab);
     });
 
-    // Trap vertical scroll wheel events over tabs and map to horizontal scroll
     container.onwheel = (e) => {
         if (e.deltaY !== 0) {
             e.preventDefault();
@@ -637,7 +660,50 @@ function updateInspectorUI() {
 }
 
 /**
- * Setup Event Handlers
+ * Mobile Drawer & UI Mechanics
+ */
+function setupMobilePanels() {
+    const sidebar = document.getElementById('inspector-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const toggleSidebarBtn = document.getElementById('btn-toggle-sidebar');
+    const closeSidebarBtn = document.getElementById('btn-close-sidebar');
+
+    const telemetryPanel = document.getElementById('telemetry-panel');
+    const toggleTelemetryBtn = document.getElementById('btn-toggle-telemetry');
+    const closeTelemetryBtn = document.getElementById('btn-close-telemetry');
+
+    function openSidebar() {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    }
+
+    toggleSidebarBtn.onclick = () => {
+        if (sidebar.classList.contains('-translate-x-full')) {
+            openSidebar();
+        } else {
+            closeSidebar();
+        }
+    };
+
+    closeSidebarBtn.onclick = closeSidebar;
+    overlay.onclick = closeSidebar;
+
+    toggleTelemetryBtn.onclick = () => {
+        telemetryPanel.classList.toggle('translate-y-[120%]');
+    };
+
+    closeTelemetryBtn.onclick = () => {
+        telemetryPanel.classList.add('translate-y-[120%]');
+    };
+}
+
+/**
+ * Setup Event Handlers with Mobile Touch Gestures
  */
 function setupEventListeners() {
     window.addEventListener('resize', resizeCanvas);
@@ -647,11 +713,11 @@ function setupEventListeners() {
     btnPlay.onclick = () => {
         state.running = !state.running;
         btnPlay.className = state.running
-            ? 'bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm'
-            : 'bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm';
+            ? 'bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-sm'
+            : 'bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-sm';
         btnPlay.innerHTML = state.running
-            ? '<i class="fa-solid fa-pause"></i> <span>Pause</span>'
-            : '<i class="fa-solid fa-play"></i> <span>Start</span>';
+            ? '<i class="fa-solid fa-pause text-[10px]"></i> <span id="lbl-play" class="hidden xs:inline">Pause</span>'
+            : '<i class="fa-solid fa-play text-[10px]"></i> <span id="lbl-play" class="hidden xs:inline">Start</span>';
     };
 
     document.getElementById('btn-step').onclick = () => {
@@ -670,7 +736,7 @@ function setupEventListeners() {
         loadPreset(e.target.value);
     };
 
-    // Display Toggle Buttons
+    // Display Toggles
     document.getElementById('toggle-grid').onclick = (e) => {
         state.showGrid = !state.showGrid;
         e.currentTarget.classList.toggle('opacity-50', !state.showGrid);
@@ -684,7 +750,6 @@ function setupEventListeners() {
         e.currentTarget.classList.toggle('opacity-50', !state.showVectors);
     };
 
-    // Collision Mode Selector
     const colSelect = document.getElementById('select-collision-mode');
     colSelect.onchange = (e) => {
         state.collisionMode = e.target.value;
@@ -763,18 +828,20 @@ function setupEventListeners() {
     document.getElementById('btn-zoom-out').onclick = () => { state.zoom = state.zoom * 1.25; updateHUD(); };
     document.getElementById('btn-recenter').onclick = () => { state.panOffset = { x: 0, y: 0 }; };
 
-    // Canvas Mouse Interaction (Panning & Dragging)
-    canvas.onmousedown = (e) => {
+    // Canvas Pointer & Drag Input Processing (Mouse & Touch)
+    function handlePointerStart(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const mouseX = clientX - rect.left;
+        const mouseY = clientY - rect.top;
 
+        // Increased target hit radius on mobile (minimum 20px hit area)
         for (let i = 0; i < state.bodies.length; i++) {
             const b = state.bodies[i];
             const pos = worldToScreen(b.x, b.y);
             const dist = Math.hypot(mouseX - pos.x, mouseY - pos.y);
+            const hitRadius = Math.max(b.radius + 12, 22);
 
-            if (dist <= b.radius + 6) {
+            if (dist <= hitRadius) {
                 state.selectedBodyIndex = i;
                 state.isDragging = true;
                 state.dragTarget = b;
@@ -788,33 +855,86 @@ function setupEventListeners() {
 
         state.isDragging = true;
         state.dragType = 'pan';
-        state.lastMousePos = { x: e.clientX, y: e.clientY };
-    };
+        state.lastMousePos = { x: clientX, y: clientY };
+    }
 
-    canvas.onmousemove = (e) => {
+    function handlePointerMove(clientX, clientY) {
         if (!state.isDragging) return;
 
         if (state.dragType === 'pan') {
-            const dx = e.clientX - state.lastMousePos.x;
-            const dy = e.clientY - state.lastMousePos.y;
+            const dx = clientX - state.lastMousePos.x;
+            const dy = clientY - state.lastMousePos.y;
             state.panOffset.x += dx;
             state.panOffset.y += dy;
-            state.lastMousePos = { x: e.clientX, y: e.clientY };
+            state.lastMousePos = { x: clientX, y: clientY };
         } else if (state.dragType === 'body' && state.dragTarget) {
             const rect = canvas.getBoundingClientRect();
-            const worldPos = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+            const worldPos = screenToWorld(clientX - rect.left, clientY - rect.top);
             state.dragTarget.x = worldPos.x;
             state.dragTarget.y = worldPos.y;
             state.dragTarget.trail = [];
             updateInspectorUI();
             updateHUD();
         }
-    };
+    }
 
-    window.onmouseup = () => {
+    function handlePointerEnd() {
         state.isDragging = false;
         state.dragTarget = null;
+    }
+
+    // Mouse Listeners
+    canvas.onmousedown = (e) => {
+        handlePointerStart(e.clientX, e.clientY);
     };
+
+    canvas.onmousemove = (e) => {
+        handlePointerMove(e.clientX, e.clientY);
+    };
+
+    window.onmouseup = handlePointerEnd;
+
+    // Mobile Multi-Touch Gestures (Pan & Pinch Zoom)
+    canvas.addEventListener('touchstart', (e) => {
+        activeTouches = Array.from(e.touches);
+        if (activeTouches.length === 1) {
+            handlePointerStart(activeTouches[0].clientX, activeTouches[0].clientY);
+        } else if (activeTouches.length === 2) {
+            state.isDragging = false;
+            initialPinchDistance = Math.hypot(
+                activeTouches[0].clientX - activeTouches[1].clientX,
+                activeTouches[0].clientY - activeTouches[1].clientY
+            );
+            initialZoomOnPinch = state.zoom;
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+        activeTouches = Array.from(e.touches);
+        if (activeTouches.length === 1) {
+            handlePointerMove(activeTouches[0].clientX, activeTouches[0].clientY);
+        } else if (activeTouches.length === 2 && initialPinchDistance) {
+            const currentDist = Math.hypot(
+                activeTouches[0].clientX - activeTouches[1].clientX,
+                activeTouches[0].clientY - activeTouches[1].clientY
+            );
+            if (currentDist > 0) {
+                const pinchScale = initialPinchDistance / currentDist;
+                state.zoom = Math.max(0.001, initialZoomOnPinch * pinchScale);
+                updateHUD();
+            }
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', (e) => {
+        activeTouches = Array.from(e.touches);
+        if (activeTouches.length < 2) {
+            initialPinchDistance = null;
+        }
+        if (activeTouches.length === 0) {
+            handlePointerEnd();
+        }
+    });
 
     canvas.onwheel = (e) => {
         e.preventDefault();
@@ -831,7 +951,7 @@ function setupEventListeners() {
     };
     document.getElementById('btn-close-quiz').onclick = () => quizModal.classList.add('hidden');
 
-    // Interactive Velocity Calculator
+    // Velocity Calculator
     const calcR = document.getElementById('calc-r');
     const calcM = document.getElementById('calc-m');
     const updateCalcResults = () => {
@@ -864,9 +984,16 @@ function setupEventListeners() {
     };
 }
 
+/**
+ * Responsive High-DPI Canvas Resizer
+ */
 function resizeCanvas() {
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+    state.dpr = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+    canvas.width = width * state.dpr;
+    canvas.height = height * state.dpr;
 }
 
 /**
@@ -886,12 +1013,13 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-// Window OnLoad Initializer
+// Window Initializer
 window.onload = () => {
     canvas = document.getElementById('sim-canvas');
     ctx = canvas.getContext('2d');
     
     resizeCanvas();
+    setupMobilePanels();
     setupEventListeners();
     loadPreset('sun-earth');
     animate();

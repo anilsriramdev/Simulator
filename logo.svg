@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <rect width="128" height="128" rx="28" fill="#0f172a"/>
+  
+  <g transform="translate(64, 64)">
+    <!-- Outer Ring -->
+    <circle cx="0" cy="0" r="42" fill="none" stroke="#a855f7" stroke-width="10"/>
+    
+    <!-- Inner Core -->
+    <circle cx="0" cy="0" r="16" fill="#38bdf8"/>
+    
+    <!-- Orbiting Accent Dot -->
+    <circle cx="42" cy="0" r="7" fill="#ffffff"/>
+  </g>
+</svg>

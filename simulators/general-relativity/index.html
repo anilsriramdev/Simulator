@@ -72,60 +72,60 @@
             box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
         }
         .katex { font-size: 0.95em; }
+        #sidebar-panel {
+            transition: transform 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col select-none overflow-hidden">
 
     <!-- Top Navigation Header -->
-    <header class="glass-panel z-20 px-4 py-2.5 flex items-center justify-between border-b border-slate-800 shrink-0">
-        <div class="flex items-center space-x-3">
-            <a href="../../index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 mr-1" title="Return to Catalog">
-                <i class="fa-solid fa-arrow-left"></i> Catalog
+    <header class="glass-panel z-20 px-3 md:px-4 py-2.5 flex items-center justify-between border-b border-slate-800 shrink-0 gap-2">
+        <div class="flex items-center space-x-2 md:space-x-3 min-w-0">
+            <!-- Mobile Sidebar Toggle Button -->
+            <button id="btn-toggle-sidebar" class="md:hidden bg-slate-800 hover:bg-slate-700 text-purple-400 p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 flex-shrink-0">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <a href="../../index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 flex-shrink-0" title="Return to Catalog">
+                <i class="fa-solid fa-arrow-left"></i> <span class="hidden sm:inline">Catalog</span>
             </a>
-            <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-purple-500/20">
-                <i class="fa-solid fa-circle-nodes text-xl"></i>
+            <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-purple-500/20 flex-shrink-0">
+                <i class="fa-solid fa-circle-nodes text-base md:text-xl"></i>
             </div>
-            <div>
-                <h1 class="font-bold text-base tracking-wide text-white flex items-center gap-2">
+            <div class="min-w-0">
+                <h1 class="font-bold text-xs md:text-base tracking-wide text-white flex items-center gap-2 truncate">
                     General Relativity Lab
-                    <span class="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-normal">Schwarzschild Metric</span>
+                    <span class="hidden sm:inline text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-normal">Schwarzschild Metric</span>
                 </h1>
-                <p class="text-xs text-slate-400">Geodesics, Perihelion Precession & Light Deflection</p>
+                <p class="text-[10px] md:text-xs text-slate-400 truncate">Geodesics & Perihelion Precession</p>
             </div>
         </div>
 
-        <!-- Simulation Controls -->
-        <div class="flex items-center space-x-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
-            <button id="btn-play" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
-                <i class="fa-solid fa-play"></i> <span id="lbl-play">Start</span>
+        <!-- Simulation Controls & Presets -->
+        <div class="flex items-center space-x-2">
+            <button id="btn-play" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+                <i class="fa-solid fa-play"></i> <span id="lbl-play" class="hidden sm:inline">Start</span>
             </button>
-            <button id="btn-reset" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition">
-                <i class="fa-solid fa-rotate-left"></i> Reset
+            <button id="btn-reset" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition" title="Reset">
+                <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Reset</span>
             </button>
-            <div class="h-4 w-px bg-slate-800 mx-1"></div>
-            <!-- Preset Selector -->
-            <div class="flex items-center gap-1.5 pl-1">
+
+            <!-- Preset Selector (Desktop) -->
+            <div class="hidden xl:flex items-center gap-1.5 pl-1 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
                 <i class="fa-solid fa-sliders text-xs text-slate-400"></i>
-                <select id="preset-select" class="bg-slate-800 text-xs text-slate-200 border border-slate-700 rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500">
-                    <option value="precession">Preset: Mercury Precession (Exaggerated GR)</option>
-                    <option value="photon-sphere">Preset: Photon Sphere Deflection & Capture</option>
-                    <option value="isco">Preset: ISCO Orbit (Innermost Stable Orbit)</option>
-                    <option value="light-bending">Preset: Gravitational Light Deflection</option>
+                <select id="preset-select" class="bg-slate-800 text-xs text-slate-200 border border-slate-700 rounded-lg px-2 py-1 focus:outline-none focus:border-purple-500">
+                    <option value="precession">Preset: Mercury Precession</option>
+                    <option value="photon-sphere">Preset: Photon Sphere Capture</option>
+                    <option value="isco">Preset: ISCO Orbit</option>
+                    <option value="light-bending">Preset: Light Deflection</option>
                     <option value="black-hole-plunge">Preset: Event Horizon Plunge</option>
                 </select>
             </div>
-        </div>
 
-        <!-- Display Toggles & Lab Modal Button -->
-        <div class="hidden lg:flex items-center space-x-2">
-            <button id="toggle-grid" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-purple-600/30 text-purple-300 border border-purple-500/40 flex items-center gap-1.5">
-                <i class="fa-solid fa-border-all"></i> Spacetime Mesh
-            </button>
-            <button id="toggle-horizons" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-purple-600/30 text-purple-300 border border-purple-500/40 flex items-center gap-1.5">
-                <i class="fa-solid fa-bullseye"></i> Horizons
-            </button>
-            <button id="btn-math-modal" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 ml-2 transition">
-                <i class="fa-solid fa-graduation-cap"></i> GR Field Equations
+            <!-- Formulas Modal Button -->
+            <button id="btn-math-modal" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition" title="Field Equations">
+                <i class="fa-solid fa-graduation-cap"></i> <span class="hidden sm:inline">Equations</span>
             </button>
         </div>
     </header>
@@ -133,23 +133,52 @@
     <!-- Main Content Area -->
     <div class="flex-1 flex relative overflow-hidden">
 
-        <!-- Left Sidebar: Controls & Inspector -->
-        <aside class="w-80 glass-panel border-r border-slate-800 flex flex-col z-10 shrink-0 overflow-y-auto">
-            <div class="p-3.5 border-b border-slate-800 bg-slate-900/40">
+        <!-- Left Sidebar: Controls & Inspector (Drawer on Mobile) -->
+        <aside id="sidebar-panel" class="absolute md:relative inset-y-0 left-0 z-40 w-85 md:w-80 glass-panel border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto transform -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
+            <div class="p-3.5 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                     <i class="fa-solid fa-sliders text-purple-400"></i> Relativistic Parameters
                 </h2>
+                <!-- Close Button for Mobile Drawer -->
+                <button id="btn-close-sidebar" class="md:hidden text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Preset Selector -->
+            <div class="p-4 xl:hidden border-b border-slate-800 bg-slate-900/20">
+                <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Simulation Presets</label>
+                <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5">
+                    <i class="fa-solid fa-sliders text-xs text-purple-400"></i>
+                    <select id="preset-select-mobile" class="bg-slate-900 text-xs text-slate-200 outline-none w-full py-0.5 cursor-pointer">
+                        <option value="precession">Preset: Mercury Precession</option>
+                        <option value="photon-sphere">Preset: Photon Sphere Capture</option>
+                        <option value="isco">Preset: ISCO Orbit</option>
+                        <option value="light-bending">Preset: Light Deflection</option>
+                        <option value="black-hole-plunge">Preset: Event Horizon Plunge</option>
+                    </select>
+                </div>
             </div>
 
             <div class="p-4 space-y-5 text-xs flex-1">
                 
-                <!-- GR Effect Intensity Correction -->
+                <!-- Simulation Speed Control Bar -->
                 <div>
+                    <div class="flex justify-between text-slate-300 mb-1">
+                        <span class="font-medium">Simulation Speed</span>
+                        <span id="disp-sim-speed" class="mono text-purple-300 font-semibold">1.0x</span>
+                    </div>
+                    <input type="range" id="slider-sim-speed" min="0.1" max="5.0" step="0.1" value="1.0" class="w-full cursor-pointer">
+                    <p class="text-[10px] text-slate-500 mt-1">Adjust simulation time progression speed.</p>
+                </div>
+
+                <!-- GR Effect Intensity Correction -->
+                <div class="pt-2 border-t border-slate-800">
                     <div class="flex justify-between text-slate-300 mb-1">
                         <span class="font-medium">Relativistic Factor (α)</span>
                         <span id="disp-alpha" class="mono text-purple-300 font-semibold">1.00</span>
                     </div>
-                    <input type="range" id="slider-alpha" min="0" max="5" step="0.05" value="1.0" class="w-full">
+                    <input type="range" id="slider-alpha" min="0" max="5" step="0.05" value="1.0" class="w-full cursor-pointer">
                     <p class="text-[10px] text-slate-500 mt-1">Scale GR 1/r³ term (0.0 = Newtonian Gravity).</p>
                 </div>
 
@@ -159,18 +188,18 @@
                         <span class="font-medium">Black Hole Mass (M)</span>
                         <span id="disp-mass" class="mono text-purple-300 font-semibold">10 M☉</span>
                     </div>
-                    <input type="range" id="slider-mass" min="1" max="50" step="1" value="10" class="w-full">
+                    <input type="range" id="slider-mass" min="1" max="50" step="1" value="10" class="w-full cursor-pointer">
                 </div>
 
                 <!-- Particle Type Toggle -->
                 <div class="space-y-2 pt-2 border-t border-slate-800">
                     <label class="font-medium text-slate-300 block">Test Particle Type</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <button id="btn-type-massive" class="py-1.5 rounded-lg bg-purple-600 text-white font-semibold text-xs border border-purple-500/50">
-                            Massive Body (m > 0)
+                        <button id="btn-type-massive" class="py-1.5 rounded-lg bg-purple-600 text-white font-semibold text-xs border border-purple-500/50 transition">
+                            Massive Body
                         </button>
-                        <button id="btn-type-photon" class="py-1.5 rounded-lg bg-slate-800 text-slate-400 font-semibold text-xs border border-slate-700">
-                            Photon Light (m = 0)
+                        <button id="btn-type-photon" class="py-1.5 rounded-lg bg-slate-800 text-slate-400 font-semibold text-xs border border-slate-700 transition">
+                            Photon Light
                         </button>
                     </div>
                 </div>
@@ -181,16 +210,16 @@
                         <span class="font-medium text-slate-300">Initial Speed (v / c)</span>
                         <span id="disp-speed" class="mono text-emerald-400 font-semibold">0.45 c</span>
                     </div>
-                    <input type="range" id="slider-speed" min="0.01" max="1.0" step="0.01" value="0.45" class="w-full">
+                    <input type="range" id="slider-speed" min="0.01" max="1.0" step="0.01" value="0.45" class="w-full cursor-pointer">
                 </div>
 
-                <!-- Orbit Path Tail Length -->
+                <!-- Orbit Path Trail Length -->
                 <div class="pt-2 border-t border-slate-800">
                     <div class="flex justify-between text-slate-300 mb-1">
                         <span>Geodesic Path Trail</span>
                         <span id="disp-trail-len" class="mono text-purple-300">1200 pts</span>
                     </div>
-                    <input type="range" id="slider-trail-len" min="500" max="10000" step="500" value="3000" class="w-full">
+                    <input type="range" id="slider-trail-len" min="500" max="10000" step="500" value="3000" class="w-full cursor-pointer">
                 </div>
 
                 <!-- Schwarzschild Critical Boundaries Explanation -->
@@ -209,59 +238,62 @@
                         <span id="disp-risco" class="mono text-slate-300">88.6 km</span>
                     </div>
                 </div>
+
+                <!-- Visual Toggles -->
+                <div class="pt-2 border-t border-slate-800 space-y-2 text-xs">
+                    <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">View Overlays</div>
+                    <div class="flex gap-2">
+                        <button id="toggle-grid" class="flex-1 py-1.5 rounded-lg font-medium bg-purple-600/30 text-purple-300 border border-purple-500/40 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-border-all"></i> Grid
+                        </button>
+                        <button id="toggle-horizons" class="flex-1 py-1.5 rounded-lg font-medium bg-purple-600/30 text-purple-300 border border-purple-500/40 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-bullseye"></i> Horizons
+                        </button>
+                    </div>
+                </div>
             </div>
         </aside>
 
         <!-- Center Interactive Viewport -->
         <main class="flex-1 relative bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
-            <canvas id="sim-canvas" class="w-full h-full cursor-grab active:cursor-grabbing block"></canvas>
+            <!-- Added touch-none to prevent browser scroll interference on mobile drag -->
+            <canvas id="sim-canvas" class="w-full h-full cursor-grab active:cursor-grabbing block touch-none"></canvas>
 
-            <!-- Floating Top HUD -->
-            <div class="absolute top-4 left-4 right-4 flex justify-between pointer-events-none z-10">
-                <div class="glass-panel px-3.5 py-2 rounded-xl border border-slate-800/80 pointer-events-auto flex items-center gap-3">
-                    <i class="fa-solid fa-atom text-purple-400"></i>
-                    <div>
-                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Spacetime Metric</div>
-                        <div class="mono text-xs font-bold text-white">Schwarzschild Coordinates</div>
-                    </div>
-                </div>
-
-                <!-- Zoom Controls -->
-                <div class="glass-panel px-2 py-1 rounded-xl border border-slate-800/80 pointer-events-auto flex items-center gap-1">
-                    <button id="btn-zoom-in" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition">
-                        <i class="fa-solid fa-plus text-xs"></i>
-                    </button>
-                    <button id="btn-zoom-out" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition">
-                        <i class="fa-solid fa-minus text-xs"></i>
-                    </button>
-                    <button id="btn-recenter" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition">
-                        <i class="fa-solid fa-compress text-xs"></i>
-                    </button>
-                </div>
+            <!-- Floating Top Zoom Controls -->
+            <div class="absolute top-4 right-4 z-10 glass-panel p-1 rounded-xl border border-slate-800/80 flex flex-col gap-1 text-slate-300 shadow-xl">
+                <button id="btn-zoom-in" class="p-2 hover:bg-slate-800 hover:text-purple-400 rounded-lg transition" title="Zoom In">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                </button>
+                <button id="btn-zoom-out" class="p-2 hover:bg-slate-800 hover:text-purple-400 rounded-lg transition" title="Zoom Out">
+                    <i class="fa-solid fa-minus text-xs"></i>
+                </button>
+                <button id="btn-recenter" class="p-2 hover:bg-slate-800 hover:text-purple-400 rounded-lg transition" title="Recenter">
+                    <i class="fa-solid fa-compress text-xs"></i>
+                </button>
             </div>
 
             <!-- Bottom Relativistic Telemetry -->
-            <div class="absolute bottom-4 left-4 right-4 glass-panel rounded-2xl p-4 border border-slate-800/90 pointer-events-auto max-w-4xl mx-auto shadow-2xl">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div class="absolute bottom-4 left-3 right-3 z-10 glass-panel rounded-2xl p-3 border border-slate-800/90 pointer-events-auto max-w-4xl mx-auto shadow-2xl">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                     
-                    <div class="glass-card p-2.5 rounded-xl border border-slate-800">
-                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Radial Distance (r / rₛ)</div>
-                        <div id="hud-r-rs" class="mono text-sm font-bold text-purple-400">4.20 rₛ</div>
+                    <div class="glass-card p-2 rounded-xl border border-slate-800">
+                        <div class="text-[8px] sm:text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Radial Distance (r / rₛ)</div>
+                        <div id="hud-r-rs" class="mono text-xs sm:text-sm font-bold text-purple-400">4.20 rₛ</div>
                     </div>
 
-                    <div class="glass-card p-2.5 rounded-xl border border-slate-800">
-                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Gravitational Time Dilation</div>
-                        <div id="hud-time-dilation" class="mono text-sm font-bold text-amber-400">1.13x slower</div>
+                    <div class="glass-card p-2 rounded-xl border border-slate-800">
+                        <div class="text-[8px] sm:text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Time Dilation</div>
+                        <div id="hud-time-dilation" class="mono text-xs sm:text-sm font-bold text-amber-400">1.13x slower</div>
                     </div>
 
-                    <div class="glass-card p-2.5 rounded-xl border border-slate-800">
-                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Effective Potential (V_eff)</div>
-                        <div id="hud-potential" class="mono text-sm font-bold text-emerald-400">-0.14 c²</div>
+                    <div class="glass-card p-2 rounded-xl border border-slate-800">
+                        <div class="text-[8px] sm:text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Effective Potential</div>
+                        <div id="hud-potential" class="mono text-xs sm:text-sm font-bold text-emerald-400">-0.14 c²</div>
                     </div>
 
-                    <div class="glass-card p-2.5 rounded-xl border border-slate-800">
-                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Precession Angle Shift</div>
-                        <div id="hud-precession" class="mono text-sm font-bold text-sky-400">12.4° / orbit</div>
+                    <div class="glass-card p-2 rounded-xl border border-slate-800">
+                        <div class="text-[8px] sm:text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Precession Shift</div>
+                        <div id="hud-precession" class="mono text-xs sm:text-sm font-bold text-sky-400">12.4° / orbit</div>
                     </div>
 
                 </div>

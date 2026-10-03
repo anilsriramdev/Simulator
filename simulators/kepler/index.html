@@ -35,7 +35,7 @@
             font-family: 'JetBrains Mono', monospace;
         }
         .glass-panel {
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.9);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -43,55 +43,59 @@
         input[type="range"] {
             accent-color: #f59e0b;
         }
+        /* Mobile sidebar slide transition */
+        #sidebar-panel {
+            transition: transform 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col justify-between selection:bg-amber-500 selection:text-black">
 
-    <!-- Top Navigation Bar (GR Style) -->
-    <header class="glass-panel sticky top-0 z-50 border-b border-slate-800/80 px-6 py-3 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <a href="../../index.html" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition border border-slate-700/80 text-xs font-semibold flex items-center gap-2">
-                <i class="fa-solid fa-arrow-left"></i> Catalog
+    <!-- Top Navigation Bar -->
+    <header class="glass-panel sticky top-0 z-50 border-b border-slate-800/80 px-4 md:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center space-x-3 min-w-0">
+            <!-- Mobile Sidebar Toggle Button -->
+            <button id="btn-toggle-sidebar" class="md:hidden px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-xl transition border border-slate-700 text-xs font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <a href="../../index.html" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition border border-slate-700/80 text-xs font-semibold flex items-center gap-2 flex-shrink-0">
+                <i class="fa-solid fa-arrow-left"></i> <span class="hidden sm:inline">Catalog</span>
             </a>
-            <div class="flex items-center space-x-2.5">
-                <div class="bg-gradient-to-tr from-amber-600 to-orange-600 text-white p-2 rounded-xl shadow-lg shadow-amber-500/20 text-base">
+            <div class="flex items-center space-x-2.5 min-w-0">
+                <div class="bg-gradient-to-tr from-amber-600 to-orange-600 text-white p-2 rounded-xl shadow-lg shadow-amber-500/20 text-sm md:text-base flex-shrink-0">
                     <i class="fa-solid fa-compass-drafting"></i>
                 </div>
-                <div>
-                    <h1 class="text-base font-extrabold text-white tracking-tight flex items-center gap-2">
-                        Kepler's Laws Lab
-                        <span class="text-[10px] mono bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-medium">Orbital Mechanics</span>
+                <div class="min-w-0">
+                    <h1 class="text-sm md:text-base font-extrabold text-white tracking-tight flex items-center gap-2 truncate">
+                        Kepler's Lab
+                        <span class="hidden sm:inline text-[10px] mono bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-medium flex-shrink-0">Orbital Mechanics</span>
                     </h1>
-                    <p class="text-[11px] text-slate-400">Elliptical Orbits, Area Sweeps & Harmonic Ratios</p>
+                    <p class="text-[10px] md:text-[11px] text-slate-400 truncate">Elliptical Orbits & Area Sweeps</p>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center gap-3 text-xs">
+        <div class="flex items-center flex-wrap gap-2 text-xs">
             <!-- Start / Pause -->
-            <button id="btn-toggle-sim" class="px-3.5 py-1.5 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30 transition flex items-center gap-1.5 shadow-md shadow-emerald-500/20">
+            <button id="btn-toggle-sim" class="px-3 py-1.5 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30 transition flex items-center gap-1.5 shadow-md shadow-emerald-500/20">
                 <i class="fa-solid fa-play"></i> <span id="lbl-start">Start</span>
             </button>
 
             <!-- Reset -->
-            <button id="btn-reset" class="px-3.5 py-1.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-rotate-right"></i> Reset
+            <button id="btn-reset" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-right"></i> <span class="hidden sm:inline">Reset</span>
             </button>
 
-            <!-- Header Preset Dropdown (Styled readable background) -->
-            <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1">
+            <!-- Preset Selection -->
+            <div class="hidden sm:flex items-center gap-2 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1">
                 <i class="fa-solid fa-sliders text-amber-400"></i>
                 <select id="preset-select" class="bg-slate-900 text-slate-200 outline-none text-xs font-medium cursor-pointer py-0.5"></select>
             </div>
 
-            <!-- Grid Overlay Toggle -->
-            <button id="btn-toggle-grid" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-border-all"></i> Polar Grid
-            </button>
-
             <!-- Formulas Modal Button -->
-            <button id="btn-open-formulas" class="px-3 py-1.5 rounded-xl font-semibold bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-graduation-cap text-sm"></i> Kepler Equations
+            <button id="btn-open-formulas" class="p-2 sm:px-3 sm:py-1.5 rounded-xl font-semibold bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5" title="Kepler Equations">
+                <i class="fa-solid fa-graduation-cap text-sm"></i> <span class="hidden sm:inline">Equations</span>
             </button>
         </div>
     </header>
@@ -99,8 +103,24 @@
     <!-- Main Workspace -->
     <div class="flex-1 flex overflow-hidden relative">
 
-        <!-- Left Controls Sidebar -->
-        <aside class="w-80 glass-panel border-r border-slate-800/80 p-5 flex flex-col gap-5 overflow-y-auto z-10">
+        <!-- Controls Sidebar (Drawer on Mobile) -->
+        <aside id="sidebar-panel" class="absolute md:relative inset-y-0 left-0 z-40 w-85 md:w-80 flex-shrink-0 glass-panel border-r border-slate-800/80 p-5 flex flex-col gap-5 overflow-y-auto transform -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
+            <div class="flex items-center justify-between md:hidden pb-2 border-b border-slate-800">
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Controls & Settings</span>
+                <button id="btn-close-sidebar" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Preset Selector -->
+            <div class="sm:hidden">
+                <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Orbit Presets</label>
+                <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5">
+                    <i class="fa-solid fa-sliders text-amber-400"></i>
+                    <select id="preset-select-mobile" class="bg-slate-900 text-slate-200 outline-none text-xs font-medium cursor-pointer w-full py-0.5"></select>
+                </div>
+            </div>
+
             <div>
                 <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
                     <i class="fa-solid fa-sliders"></i> Orbital Parameters
@@ -166,10 +186,14 @@
                         <input type="checkbox" id="show-foci" checked class="rounded border-slate-700 text-amber-500 focus:ring-0">
                         <span>Show Focal Points (Law 1)</span>
                     </label>
+                    <label class="flex items-center gap-2.5 cursor-pointer hover:text-white">
+                        <input type="checkbox" id="show-grid" checked class="rounded border-slate-700 text-amber-500 focus:ring-0">
+                        <span>Show Polar Grid</span>
+                    </label>
                 </div>
             </div>
 
-            <!-- Focus Summary Card -->
+            <!-- Geometry Info Card -->
             <div class="mt-auto bg-slate-950/80 border border-slate-800/80 rounded-xl p-3.5 space-y-1.5 text-xs">
                 <div class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">Orbital Geometry</div>
                 <div class="flex justify-between"><span class="text-slate-400">Perihelion ($q$):</span> <span id="val-perihelion" class="mono text-emerald-400 font-medium">0 AU</span></div>
@@ -179,16 +203,7 @@
         </aside>
 
         <!-- Viewport Canvas Area -->
-        <main class="flex-1 h-full w-full relative bg-slate-950">
-            <!-- Floating Top Coordinates Label -->
-            <div class="absolute top-4 left-4 z-10 glass-panel px-3.5 py-2 rounded-xl text-xs border border-slate-800/80 flex items-center gap-2.5">
-                <i class="fa-solid fa-atom text-amber-400"></i>
-                <div>
-                    <span class="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">Coordinate Frame</span>
-                    <span class="font-bold text-slate-200">Heliocentric Polar Coordinates</span>
-                </div>
-            </div>
-
+        <main class="flex-1 h-full w-full relative bg-slate-950 overflow-hidden">
             <!-- Floating Right Zoom Controls -->
             <div class="absolute top-4 right-4 z-10 glass-panel p-1.5 rounded-xl border border-slate-800/80 flex flex-col gap-1 text-slate-300">
                 <button id="btn-zoom-in" class="p-2 hover:bg-slate-800 hover:text-amber-400 rounded-lg transition" title="Zoom In">
@@ -205,23 +220,23 @@
             <!-- Canvas element -->
             <canvas id="sim-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
 
-            <!-- Bottom Floating Telemetry Cards (GR Style) -->
-            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-4 pointer-events-none">
-                <div class="glass-panel px-5 py-3 rounded-2xl border border-slate-800/90 shadow-2xl flex flex-col">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Orbital Period ($T$)</span>
-                    <span id="telemetry-period" class="text-lg font-black mono text-amber-400">0.00 yrs</span>
+            <!-- Telemetry Display Cards -->
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-full px-3 flex flex-wrap justify-center items-center gap-2 pointer-events-auto">
+                <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
+                    <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Period ($T$)</span>
+                    <span id="telemetry-period" class="text-sm sm:text-base font-black mono text-amber-400">0.00 yrs</span>
                 </div>
-                <div class="glass-panel px-5 py-3 rounded-2xl border border-slate-800/90 shadow-2xl flex flex-col">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Harmonic Ratio ($T^2 / a^3$)</span>
-                    <span id="telemetry-ratio" class="text-lg font-black mono text-emerald-400">1.000</span>
+                <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
+                    <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Ratio ($T^2 / a^3$)</span>
+                    <span id="telemetry-ratio" class="text-sm sm:text-base font-black mono text-emerald-400">1.000</span>
                 </div>
-                <div class="glass-panel px-5 py-3 rounded-2xl border border-slate-800/90 shadow-2xl flex flex-col">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Current Speed</span>
-                    <span id="telemetry-speed" class="text-lg font-black mono text-sky-400">0.00 km/s</span>
+                <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
+                    <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Speed</span>
+                    <span id="telemetry-speed" class="text-sm sm:text-base font-black mono text-sky-400">0.00 km/s</span>
                 </div>
-                <div class="glass-panel px-5 py-3 rounded-2xl border border-slate-800/90 shadow-2xl flex flex-col">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Radial Distance ($r$)</span>
-                    <span id="telemetry-distance" class="text-lg font-black mono text-purple-400">0.00 AU</span>
+                <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
+                    <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Radius ($r$)</span>
+                    <span id="telemetry-distance" class="text-sm sm:text-base font-black mono text-purple-400">0.00 AU</span>
                 </div>
             </div>
         </main>

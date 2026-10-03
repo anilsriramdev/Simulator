@@ -1,4 +1,4 @@
-// --- DYNAMIC CONFIGURATION & CONSTANTS ---
+// Dynamic Configuration & Constants
 const CONFIG = {
   CANVAS: {
     BG_COLOR: '#030712',
@@ -48,7 +48,7 @@ const CONFIG = {
   }
 };
 
-// --- ORBITAL PHYSICS ENGINE ---
+// Orbital Physics Engine
 class OrbitEngine {
   constructor(config) {
     this.config = config;
@@ -124,7 +124,7 @@ class OrbitEngine {
   }
 }
 
-// --- UI CONTROLLER ---
+// UI Controller
 class UIManager {
   constructor(config, onUpdate, onReset, onToggleSim) {
     this.config = config;
@@ -139,6 +139,8 @@ class UIManager {
 
   bindElements() {
     this.presetSelect = document.getElementById('preset-select');
+    this.presetSelectMobile = document.getElementById('preset-select-mobile');
+    
     this.sliderA = document.getElementById('semi-major-axis');
     this.sliderE = document.getElementById('eccentricity');
     this.sliderSpeed = document.getElementById('sim-speed');
@@ -147,7 +149,10 @@ class UIManager {
     this.btnToggleSim = document.getElementById('btn-toggle-sim');
     this.lblStart = document.getElementById('lbl-start');
     this.btnReset = document.getElementById('btn-reset');
-    this.btnToggleGrid = document.getElementById('btn-toggle-grid');
+    this.btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+    this.btnCloseSidebar = document.getElementById('btn-close-sidebar');
+    this.sidebarPanel = document.getElementById('sidebar-panel');
+
     this.btnOpenFormulas = document.getElementById('btn-open-formulas');
     this.btnCloseFormulas = document.getElementById('btn-close-formulas');
     this.modalFormulas = document.getElementById('modal-formulas');
@@ -165,13 +170,12 @@ class UIManager {
     this.chkArea = document.getElementById('show-swept-area');
     this.chkVectors = document.getElementById('show-vectors');
     this.chkFoci = document.getElementById('show-foci');
+    this.chkGrid = document.getElementById('show-grid');
 
     this.telPeriod = document.getElementById('telemetry-period');
     this.telRatio = document.getElementById('telemetry-ratio');
     this.telSpeed = document.getElementById('telemetry-speed');
     this.telDist = document.getElementById('telemetry-distance');
-
-    this.showGrid = true;
   }
 
   initializeControls() {
@@ -195,14 +199,30 @@ class UIManager {
     this.sliderTrail.step = this.config.LIMITS.TRAIL_STEP;
     this.sliderTrail.value = this.config.DEFAULTS.TRAIL;
 
-    this.presetSelect.innerHTML = '';
-    Object.entries(this.config.PRESETS).forEach(([key, preset]) => {
-      const option = document.createElement('option');
-      option.value = key;
-      option.textContent = preset.name;
-      this.presetSelect.appendChild(option);
-    });
-    this.presetSelect.value = 'custom';
+    // Populate desktop preset selector
+    if (this.presetSelect) {
+      this.presetSelect.innerHTML = '';
+      Object.entries(this.config.PRESETS).forEach(([key, preset]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = preset.name;
+        this.presetSelect.appendChild(option);
+      });
+      this.presetSelect.value = 'custom';
+    }
+
+    // Populate mobile preset selector
+    if (this.presetSelectMobile) {
+      this.presetSelectMobile.innerHTML = '';
+      Object.entries(this.config.PRESETS).forEach(([key, preset]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = preset.name;
+        this.presetSelectMobile.appendChild(option);
+      });
+      this.presetSelectMobile.value = 'custom';
+    }
+
     this.updateLabels();
   }
 
@@ -213,35 +233,52 @@ class UIManager {
     };
 
     this.sliderA.addEventListener('input', () => {
-      this.presetSelect.value = 'custom';
+      if (this.presetSelect) this.presetSelect.value = 'custom';
+      if (this.presetSelectMobile) this.presetSelectMobile.value = 'custom';
       triggerUpdate();
     });
 
     this.sliderE.addEventListener('input', () => {
-      this.presetSelect.value = 'custom';
+      if (this.presetSelect) this.presetSelect.value = 'custom';
+      if (this.presetSelectMobile) this.presetSelectMobile.value = 'custom';
       triggerUpdate();
     });
 
     this.sliderSpeed.addEventListener('input', triggerUpdate);
     this.sliderTrail.addEventListener('input', triggerUpdate);
 
-    this.presetSelect.addEventListener('change', (e) => {
-      const preset = this.config.PRESETS[e.target.value];
-      if (preset && e.target.value !== 'custom') {
+    const handlePresetChange = (val) => {
+      const preset = this.config.PRESETS[val];
+      if (preset && val !== 'custom') {
         this.sliderA.value = preset.a;
         this.sliderE.value = preset.e;
+        if (this.presetSelect) this.presetSelect.value = val;
+        if (this.presetSelectMobile) this.presetSelectMobile.value = val;
         triggerUpdate();
       }
-    });
+    };
+
+    if (this.presetSelect) {
+      this.presetSelect.addEventListener('change', (e) => handlePresetChange(e.target.value));
+    }
+    if (this.presetSelectMobile) {
+      this.presetSelectMobile.addEventListener('change', (e) => handlePresetChange(e.target.value));
+    }
 
     this.btnToggleSim.addEventListener('click', () => this.onToggleSim());
     this.btnReset.addEventListener('click', () => this.onReset());
 
-    this.btnToggleGrid.addEventListener('click', () => {
-      this.showGrid = !this.showGrid;
-      this.btnToggleGrid.classList.toggle('text-amber-400', this.showGrid);
-      this.btnToggleGrid.classList.toggle('text-slate-400', !this.showGrid);
-    });
+    if (this.btnToggleSidebar) {
+      this.btnToggleSidebar.addEventListener('click', () => {
+        this.sidebarPanel.classList.toggle('-translate-x-full');
+      });
+    }
+
+    if (this.btnCloseSidebar) {
+      this.btnCloseSidebar.addEventListener('click', () => {
+        this.sidebarPanel.classList.add('-translate-x-full');
+      });
+    }
 
     this.btnOpenFormulas.addEventListener('click', () => {
       this.modalFormulas.classList.remove('hidden');
@@ -283,7 +320,8 @@ class UIManager {
       showOrbitPath: this.chkOrbitPath.checked,
       showArea: this.chkArea.checked,
       showVectors: this.chkVectors.checked,
-      showFoci: this.chkFoci.checked
+      showFoci: this.chkFoci.checked,
+      showGrid: this.chkGrid ? this.chkGrid.checked : true
     };
   }
 
@@ -291,7 +329,7 @@ class UIManager {
     if (isRunning) {
       this.lblStart.textContent = 'Pause';
       this.btnToggleSim.firstElementChild.className = 'fa-solid fa-pause';
-      this.btnToggleSim.className = 'px-3.5 py-1.5 rounded-xl font-semibold bg-amber-600 hover:bg-amber-500 text-white border border-amber-500/30 transition flex items-center gap-1.5 shadow-md shadow-amber-500/20';
+      this.btnToggleSim.className = 'px-3 py-1.5 rounded-xl font-semibold bg-amber-600 hover:bg-amber-500 text-white border border-amber-500/30 transition flex items-center gap-1.5 shadow-md shadow-amber-500/20';
     } else {
       this.lblStart.textContent = 'Start';
       this.btnToggleSim.firstElementChild.className = 'fa-solid fa-play';
@@ -307,7 +345,7 @@ class UIManager {
   }
 }
 
-// --- MAIN SIMULATION APPLICATION ---
+// Main Simulation Application
 class SimulationApp {
   constructor() {
     this.canvas = document.getElementById('sim-canvas');
@@ -336,7 +374,6 @@ class SimulationApp {
     this.syncUI();
     this.ui.setPlayState(this.isRunning);
 
-    // Initial MathJax Typeset Pass
     if (window.MathJax && window.MathJax.typesetPromise) {
       window.MathJax.typesetPromise();
     }
@@ -363,27 +400,44 @@ class SimulationApp {
       e.preventDefault();
       const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
       this.zoomLevel = Math.min(Math.max(this.zoomLevel * zoomFactor, 0.3), 5.0);
-    });
+    }, { passive: false });
 
-    this.canvas.addEventListener('mousedown', (e) => {
+    // Touch and Mouse Dragging
+    const startDrag = (x, y) => {
       this.isDragging = true;
-      this.dragStart = { x: e.clientX - this.panX, y: e.clientY - this.panY };
-    });
+      this.dragStart = { x: x - this.panX, y: y - this.panY };
+    };
 
-    window.addEventListener('mousemove', (e) => {
+    const moveDrag = (x, y) => {
       if (!this.isDragging) return;
-      this.panX = e.clientX - this.dragStart.x;
-      this.panY = e.clientY - this.dragStart.y;
-    });
+      this.panX = x - this.dragStart.x;
+      this.panY = y - this.dragStart.y;
+    };
 
-    window.addEventListener('mouseup', () => {
+    const endDrag = () => {
       this.isDragging = false;
+    };
+
+    this.canvas.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+    window.addEventListener('mouseup', endDrag);
+
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        startDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }
     });
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1) {
+        moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    });
+    window.addEventListener('touchend', endDrag);
   }
 
   resizeCanvas() {
     const rect = this.canvas.parentElement.getBoundingClientRect();
-    this.canvas.width = rect.width || window.innerWidth - 320;
+    this.canvas.width = rect.width || window.innerWidth;
     this.canvas.height = rect.height || window.innerHeight - 60;
   }
 
@@ -442,12 +496,10 @@ class SimulationApp {
     const sunX = centerX - cPx;
     const sunY = centerY;
 
-    // 0. Polar Grid Overlay
-    if (this.ui.showGrid) {
+    if (uiState.showGrid) {
       this.drawPolarGrid(sunX, sunY, scale);
     }
 
-    // 1. Full Elliptical Path (Law 1)
     if (uiState.showOrbitPath) {
       this.ctx.beginPath();
       this.ctx.ellipse(
@@ -463,7 +515,6 @@ class SimulationApp {
       this.ctx.setLineDash([]);
     }
 
-    // 2. Active Trail History
     if (this.engine.trailHistory.length > 1) {
       this.ctx.beginPath();
       const first = this.engine.trailHistory[0];
@@ -478,7 +529,6 @@ class SimulationApp {
       this.ctx.stroke();
     }
 
-    // 3. Equal Area Sweeps (Law 2)
     if (uiState.showArea) {
       const sweepRad = (CONFIG.DEFAULTS.SWEEP_ANGLE_DEG * Math.PI) / 180;
       const startAngle = this.engine.trueAnomaly - sweepRad / 2;
@@ -495,7 +545,6 @@ class SimulationApp {
       this.ctx.fill();
     }
 
-    // 4. Focal Points (Law 1)
     if (uiState.showFoci) {
       this.ctx.fillStyle = CONFIG.CANVAS.FOCUS_COLOR;
       this.ctx.beginPath();
@@ -503,13 +552,11 @@ class SimulationApp {
       this.ctx.fill();
     }
 
-    // 5. Central Sun Body
     this.ctx.fillStyle = CONFIG.CANVAS.SUN_COLOR;
     this.ctx.beginPath();
     this.ctx.arc(sunX, sunY, 12, 0, 2 * Math.PI);
     this.ctx.fill();
 
-    // 6. Planet Body
     const pos = this.engine.getPosition();
     const planetX = sunX + pos.x * scale;
     const planetY = sunY + pos.y * scale;
@@ -519,7 +566,6 @@ class SimulationApp {
     this.ctx.arc(planetX, planetY, 7, 0, 2 * Math.PI);
     this.ctx.fill();
 
-    // 7. Velocity and Force Vectors
     if (uiState.showVectors) {
       const theta = this.engine.trueAnomaly;
       const mu = CONFIG.PHYSICS.G * CONFIG.PHYSICS.SUN_MASS;
@@ -547,14 +593,12 @@ class SimulationApp {
     this.ctx.strokeStyle = CONFIG.CANVAS.GRID_COLOR;
     this.ctx.lineWidth = 1;
 
-    // Concentric AU distance circles
     for (let r = 1; r <= CONFIG.LIMITS.A_MAX; r++) {
       this.ctx.beginPath();
       this.ctx.arc(cx, cy, r * scale, 0, 2 * Math.PI);
       this.ctx.stroke();
     }
 
-    // Radial spokes (every 30 degrees)
     for (let angle = 0; angle < 360; angle += 30) {
       const rad = (angle * Math.PI) / 180;
       this.ctx.beginPath();
@@ -595,5 +639,4 @@ class SimulationApp {
   }
 }
 
-// Start simulation on DOM load
 window.addEventListener('DOMContentLoaded', () => new SimulationApp());
