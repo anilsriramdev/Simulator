@@ -541,6 +541,22 @@ function setupEventListeners() {
     if (presetSelectMobile) {
         presetSelectMobile.onchange = (e) => handlePresetChange(e.target.value);
     }
+
+    const telemetryPanel = document.getElementById('telemetry-panel');
+    const toggleTelemetryBtn = document.getElementById('btn-toggle-telemetry');
+    const closeTelemetryBtn = document.getElementById('btn-close-telemetry');
+
+    if (toggleTelemetryBtn && telemetryPanel) {
+        toggleTelemetryBtn.onclick = () => {
+            telemetryPanel.classList.toggle('translate-y-[120%]');
+        };
+    }
+
+    if (closeTelemetryBtn && telemetryPanel) {
+        closeTelemetryBtn.onclick = () => {
+            telemetryPanel.classList.add('translate-y-[120%]');
+        };
+    }
 }
 
 /**

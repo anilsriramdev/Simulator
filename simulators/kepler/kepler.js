@@ -176,6 +176,9 @@ class UIManager {
     this.telRatio = document.getElementById('telemetry-ratio');
     this.telSpeed = document.getElementById('telemetry-speed');
     this.telDist = document.getElementById('telemetry-distance');
+    this.telemetryPanel = document.getElementById('telemetry-panel');
+    this.toggleTelemetryBtn = document.getElementById('btn-toggle-telemetry');
+    this.closeTelemetryBtn = document.getElementById('btn-close-telemetry');
   }
 
   initializeControls() {
@@ -221,6 +224,18 @@ class UIManager {
         this.presetSelectMobile.appendChild(option);
       });
       this.presetSelectMobile.value = 'custom';
+    }
+
+    if (this.toggleTelemetryBtn && this.telemetryPanel) {
+        this.toggleTelemetryBtn.onclick = () => {
+            this.telemetryPanel.classList.toggle('translate-y-[120%]');
+        };
+    }
+
+    if (this.closeTelemetryBtn && this.telemetryPanel) {
+        this.closeTelemetryBtn.onclick = () => {
+            this.telemetryPanel.classList.add('translate-y-[120%]');
+        };
     }
 
     this.updateLabels();

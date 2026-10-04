@@ -220,23 +220,37 @@
             <!-- Canvas element -->
             <canvas id="sim-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
 
-            <!-- Telemetry Display Cards -->
-            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-full px-3 flex flex-wrap justify-center items-center gap-2 pointer-events-auto">
-                <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
-                    <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Period ($T$)</span>
-                    <span id="telemetry-period" class="text-sm sm:text-base font-black mono text-amber-400">0.00 yrs</span>
+            <!-- Collapsible Mobile Telemetry Panel Button -->
+            <button id="btn-toggle-telemetry" class="md:hidden absolute bottom-4 right-4 z-30 glass-panel p-3 rounded-full border border-slate-700 text-indigo-400 shadow-2xl flex items-center justify-center">
+                <i class="fa-solid fa-chart-line text-base"></i>
+            </button>
+
+            <!-- Telemetry Display Cards Panel (Collapsible on Mobile) -->
+            <div id="telemetry-panel" class="absolute bottom-2 left-2 right-2 md:bottom-4 md:left-1/2 md:-translate-x-1/2 z-10 w-auto md:w-full px-1 md:px-3 flex flex-col md:flex-row justify-center items-center gap-2 pointer-events-auto transition-all duration-300 translate-y-[120%] md:translate-y-0">
+                <!-- Close button for mobile sheet -->
+                <div class="w-full flex justify-end md:hidden px-1">
+                    <button id="btn-close-telemetry" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
                 </div>
-                <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
-                    <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Ratio ($T^2 / a^3$)</span>
-                    <span id="telemetry-ratio" class="text-sm sm:text-base font-black mono text-emerald-400">1.000</span>
-                </div>
-                <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
-                    <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Speed</span>
-                    <span id="telemetry-speed" class="text-sm sm:text-base font-black mono text-sky-400">0.00 km/s</span>
-                </div>
-                <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
-                    <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Radius ($r$)</span>
-                    <span id="telemetry-distance" class="text-sm sm:text-base font-black mono text-purple-400">0.00 AU</span>
+                
+                <div class="w-full flex flex-wrap justify-center items-center gap-2">
+                    <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
+                        <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Period ($T$)</span>
+                        <span id="telemetry-period" class="text-sm sm:text-base font-black mono text-amber-400">0.00 yrs</span>
+                    </div>
+                    <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
+                        <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Ratio ($T^2 / a^3$)</span>
+                        <span id="telemetry-ratio" class="text-sm sm:text-base font-black mono text-emerald-400">1.000</span>
+                    </div>
+                    <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
+                        <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Speed</span>
+                        <span id="telemetry-speed" class="text-sm sm:text-base font-black mono text-sky-400">0.00 km/s</span>
+                    </div>
+                    <div class="glass-panel px-3 py-2 rounded-xl border border-slate-800/90 shadow-xl flex flex-col min-w-[100px] flex-1 sm:flex-initial">
+                        <span class="text-[8px] sm:text-[9px] uppercase font-bold text-slate-400 tracking-wider">Radius ($r$)</span>
+                        <span id="telemetry-distance" class="text-sm sm:text-base font-black mono text-purple-400">0.00 AU</span>
+                    </div>
                 </div>
             </div>
         </main>
