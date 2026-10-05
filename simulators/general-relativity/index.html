@@ -82,7 +82,8 @@
 
     <!-- Top Navigation Header -->
     <header class="glass-panel z-20 px-3 md:px-4 py-2.5 flex items-center justify-between border-b border-slate-800 shrink-0 gap-2">
-        <div class="flex items-center space-x-2 md:space-x-3 min-w-0">
+        <!-- Left Group (Sidebar Toggle, Catalog, Icon, Title) -->
+        <div class="flex items-center space-x-2 md:space-x-3 min-w-0 flex-1">
             <!-- Mobile Sidebar Toggle Button -->
             <button id="btn-toggle-sidebar" class="md:hidden bg-slate-800 hover:bg-slate-700 text-purple-400 p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 flex-shrink-0">
                 <i class="fa-solid fa-bars"></i>
@@ -91,24 +92,27 @@
             <a href="../../index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 flex-shrink-0" title="Return to Catalog">
                 <i class="fa-solid fa-arrow-left"></i> <span class="hidden sm:inline">Catalog</span>
             </a>
+            
             <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-purple-500/20 flex-shrink-0">
                 <i class="fa-solid fa-circle-nodes text-base md:text-xl"></i>
             </div>
-            <div class="min-w-0">
-                <h1 class="font-bold text-xs md:text-base tracking-wide text-white flex items-center gap-2 truncate">
+
+            <!-- Title Container (Truncates safely to prevent overflow) -->
+            <div class="min-w-0 flex-1">
+                <h1 class="font-bold text-xs md:text-base tracking-wide text-white truncate">
                     General Relativity Lab
-                    <span class="hidden sm:inline text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-normal">Schwarzschild Metric</span>
+                    <span class="hidden lg:inline text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-normal">Schwarzschild Metric</span>
                 </h1>
-                <p class="text-[10px] md:text-xs text-slate-400 truncate">Geodesics & Perihelion Precession</p>
+                <p class="text-[10px] md:text-xs text-slate-400 truncate hidden sm:block">Geodesics & Perihelion Precession</p>
             </div>
         </div>
 
-        <!-- Simulation Controls & Presets -->
-        <div class="flex items-center space-x-2">
-            <button id="btn-play" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+        <!-- Right Group (Simulation Controls, Formulas, Support) -->
+        <div class="flex items-center space-x-1.5 md:space-x-2 flex-shrink-0">
+            <button id="btn-play" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 md:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
                 <i class="fa-solid fa-play"></i> <span id="lbl-play" class="hidden sm:inline">Start</span>
             </button>
-            <button id="btn-reset" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition" title="Reset">
+            <button id="btn-reset" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition" title="Reset">
                 <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Reset</span>
             </button>
 
@@ -124,10 +128,15 @@
                 </select>
             </div>
 
-            <!-- Formulas Modal Button -->
-            <button id="btn-math-modal" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition" title="Field Equations">
-                <i class="fa-solid fa-graduation-cap"></i> <span class="hidden sm:inline">Equations</span>
+            <!-- Formulas Modal Button (Icon-only on mobile) -->
+            <button id="btn-math-modal" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 p-2 md:px-3 md:py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition" title="Field Equations">
+                <i class="fa-solid fa-graduation-cap"></i> <span class="hidden md:inline">Formulas</span>
             </button>
+            
+            <!-- Buy Me a Coffee Support Button (Icon-only on mobile) -->
+            <a href="https://www.buymeacoffee.com/interactphysics" target="_blank" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 p-2 md:px-3 md:py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition" title="Support this project">
+                <span>☕</span> <span class="hidden md:inline">Support</span>
+            </a>
         </div>
     </header>
 
