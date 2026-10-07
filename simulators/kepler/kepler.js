@@ -7,7 +7,7 @@ const CONFIG = {
     GRID_COLOR: 'rgba(255, 255, 255, 0.05)',
     SUN_COLOR: '#fbbf24',
     PLANET_COLOR: '#38bdf8',
-    SWEEP_COLOR: 'rgba(245, 158, 11, 0.22)',
+    SWEEP_COLOR: 'rgba(245, 158, 11, 0.35)',
     VECTOR_VELOCITY: '#4ade80',
     VECTOR_FORCE: '#f87171',
     FOCUS_COLOR: '#94a3b8'
@@ -20,7 +20,7 @@ const CONFIG = {
   },
   LIMITS: {
     A_MIN: 0.4,
-    A_MAX: 5.0,
+    A_MAX: 20.0,
     A_STEP: 0.05,
     E_MIN: 0.0,
     E_MAX: 0.85,
@@ -36,36 +36,59 @@ const CONFIG = {
     A: 2.0,
     E: 0.5,
     SPEED: 1.0,
-    TRAIL: 800,
-    SWEEP_ANGLE_DEG: 25
+    TRAIL: 800
   },
   PRESETS: {
     custom: { name: 'Preset: Custom Orbit', a: 2.000, e: 0.5000 },
     mercury: { name: 'Preset: Mercury Orbit', a: 0.387, e: 0.2056 },
     earth: { name: 'Preset: Earth Circular Orbit', a: 1.000, e: 0.0167 },
     mars: { name: 'Preset: Mars Orbit', a: 1.524, e: 0.0934 },
-    halley: { name: "Preset: Halley's Comet (High Eccentricity)", a: 4.200, e: 0.8200 }
+    halley: { name: "Preset: Halley's Comet (Real)", a: 17.83, e: 0.9671 }
   }
 };
 
-// Orbital Physics Engine
+// Orbital Physics Engine using RK4 Numerical Integration
 class OrbitEngine {
   constructor(config) {
     this.config = config;
     this.a = config.DEFAULTS.A;
     this.e = config.DEFAULTS.E;
-    this.trueAnomaly = 0;
+    
+    // Cartesian State Vectors: (x, y) relative to Sun at (0, 0)
+    this.x = 0;
+    this.y = 0;
+    this.vx = 0;
+    this.vy = 0;
+
     this.trailHistory = [];
+    this.sectorHistory = []; // Array of { pos, time }
+    this.reset();
   }
 
   setParameters(a, e) {
-    this.a = Math.max(0.1, a);
-    this.e = Math.min(0.99, Math.max(0, e));
+    const newA = Math.max(0.1, a);
+    const newE = Math.min(0.99, Math.max(0, e));
+
+    if (this.a !== newA || this.e !== newE) {
+      this.a = newA;
+      this.e = newE;
+      this.reset();
+    }
   }
 
   reset() {
-    this.trueAnomaly = 0;
+    // Initialize orbit at perihelion on the positive X-axis
+    const rPeri = this.a * (1 - this.e);
+    const mu = this.config.PHYSICS.G * this.config.PHYSICS.SUN_MASS;
+    const vPeri = Math.sqrt(mu * (2 / rPeri - 1 / this.a));
+
+    this.x = rPeri;
+    this.y = 0;
+    this.vx = 0;
+    this.vy = vPeri; // Perpendicular velocity at perihelion
+
     this.trailHistory = [];
+    this.sectorHistory = [];
   }
 
   getB() {
@@ -88,39 +111,90 @@ class OrbitEngine {
     return Math.sqrt(Math.pow(this.a, 3) / this.config.PHYSICS.SUN_MASS);
   }
 
-  getDistance(theta = this.trueAnomaly) {
-    return (this.a * (1 - this.e * this.e)) / (1 + this.e * Math.cos(theta));
+  getDistance() {
+    return Math.hypot(this.x, this.y);
   }
 
-  getSpeed(r = this.getDistance()) {
-    const mu = this.config.PHYSICS.G * this.config.PHYSICS.SUN_MASS;
-    const vAUperYr = Math.sqrt(Math.max(0, mu * (2 / r - 1 / this.a)));
+  getSpeed() {
+    const vAUperYr = Math.hypot(this.vx, this.vy);
     return (vAUperYr * this.config.PHYSICS.AU_IN_KM) / this.config.PHYSICS.SEC_IN_YEAR;
   }
 
-  step(deltaTimeYears, maxTrailPts) {
-    const r = this.getDistance();
-    if (r <= 0) return;
+  getTrueAnomaly() {
+    let theta = Math.atan2(this.y, this.x);
+    if (theta < 0) theta += 2 * Math.PI;
+    return theta;
+  }
 
-    const h = Math.sqrt(
-      this.config.PHYSICS.G * this.config.PHYSICS.SUN_MASS * this.a * (1 - this.e * this.e)
+  // Equations of motion derivative function for RK4
+  getDerivatives(x, y, vx, vy) {
+    const r2 = x * x + y * y;
+    const r = Math.sqrt(r2);
+    if (r === 0) return { dx: 0, dy: 0, dvx: 0, dvy: 0 };
+
+    const mu = this.config.PHYSICS.G * this.config.PHYSICS.SUN_MASS;
+    const ax = -(mu * x) / (r2 * r);
+    const ay = -(mu * y) / (r2 * r);
+
+    return { dx: vx, dy: vy, dvx: ax, dvy: ay };
+  }
+
+  // 4th-Order Runge-Kutta Step
+  stepRK4(dt) {
+    const k1 = this.getDerivatives(this.x, this.y, this.vx, this.vy);
+
+    const k2 = this.getDerivatives(
+      this.x + 0.5 * dt * k1.dx,
+      this.y + 0.5 * dt * k1.dy,
+      this.vx + 0.5 * dt * k1.dvx,
+      this.vy + 0.5 * dt * k1.dvy
     );
-    const dTheta = (h / (r * r)) * deltaTimeYears;
-    this.trueAnomaly = (this.trueAnomaly + dTheta) % (2 * Math.PI);
 
-    const pos = this.getPosition();
-    this.trailHistory.push(pos);
-    if (this.trailHistory.length > maxTrailPts) {
-      this.trailHistory.shift();
+    const k3 = this.getDerivatives(
+      this.x + 0.5 * dt * k2.dx,
+      this.y + 0.5 * dt * k2.dy,
+      this.vx + 0.5 * dt * k2.dvx,
+      this.vy + 0.5 * dt * k2.dvy
+    );
+
+    const k4 = this.getDerivatives(
+      this.x + dt * k3.dx,
+      this.y + dt * k3.dy,
+      this.vx + dt * k3.dvx,
+      this.vy + dt * k3.dvy
+    );
+
+    this.x += (dt / 6) * (k1.dx + 2 * k2.dx + 2 * k3.dx + k4.dx);
+    this.y += (dt / 6) * (k1.dy + 2 * k2.dy + 2 * k3.dy + k4.dy);
+    this.vx += (dt / 6) * (k1.dvx + 2 * k2.dvx + 2 * k3.dvx + k4.dvx);
+    this.vy += (dt / 6) * (k1.dvy + 2 * k2.dvy + 2 * k3.dvy + k4.dvy);
+  }
+
+  step(dtYears, maxTrailPts, sweepDurationYears, currentTimeYears) {
+    this.stepRK4(dtYears);
+
+    const pos = { x: this.x, y: this.y };
+
+    // 1. Distance-threshold based visual trail recording to guarantee smooth render curves
+    const lastPos = this.trailHistory[this.trailHistory.length - 1];
+    if (!lastPos || Math.hypot(pos.x - lastPos.x, pos.y - lastPos.y) > 0.005) {
+      this.trailHistory.push(pos);
+      if (this.trailHistory.length > maxTrailPts) {
+        this.trailHistory.shift();
+      }
+    }
+
+    // 2. Continuous time window recording for swept area sector
+    this.sectorHistory.push({ pos, time: currentTimeYears });
+
+    const cutoffTime = currentTimeYears - sweepDurationYears;
+    while (this.sectorHistory.length > 0 && this.sectorHistory[0].time < cutoffTime) {
+      this.sectorHistory.shift();
     }
   }
 
-  getPosition(theta = this.trueAnomaly) {
-    const r = this.getDistance(theta);
-    return {
-      x: r * Math.cos(theta),
-      y: r * Math.sin(theta)
-    };
+  getPosition() {
+    return { x: this.x, y: this.y };
   }
 }
 
@@ -171,6 +245,7 @@ class UIManager {
     this.chkVectors = document.getElementById('show-vectors');
     this.chkFoci = document.getElementById('show-foci');
     this.chkGrid = document.getElementById('show-grid');
+    this.chkSemiMajorAxis = document.getElementById('show-semi-major-axis');
 
     this.telPeriod = document.getElementById('telemetry-period');
     this.telRatio = document.getElementById('telemetry-ratio');
@@ -179,6 +254,8 @@ class UIManager {
     this.telemetryPanel = document.getElementById('telemetry-panel');
     this.toggleTelemetryBtn = document.getElementById('btn-toggle-telemetry');
     this.closeTelemetryBtn = document.getElementById('btn-close-telemetry');
+    this.sliderSweepTime = document.getElementById('sweep-time');
+    this.valSweepTime = document.getElementById('val-sweep-time');
   }
 
   initializeControls() {
@@ -202,7 +279,6 @@ class UIManager {
     this.sliderTrail.step = this.config.LIMITS.TRAIL_STEP;
     this.sliderTrail.value = this.config.DEFAULTS.TRAIL;
 
-    // Populate desktop preset selector
     if (this.presetSelect) {
       this.presetSelect.innerHTML = '';
       Object.entries(this.config.PRESETS).forEach(([key, preset]) => {
@@ -214,7 +290,6 @@ class UIManager {
       this.presetSelect.value = 'custom';
     }
 
-    // Populate mobile preset selector
     if (this.presetSelectMobile) {
       this.presetSelectMobile.innerHTML = '';
       Object.entries(this.config.PRESETS).forEach(([key, preset]) => {
@@ -227,15 +302,15 @@ class UIManager {
     }
 
     if (this.toggleTelemetryBtn && this.telemetryPanel) {
-        this.toggleTelemetryBtn.onclick = () => {
-            this.telemetryPanel.classList.toggle('translate-y-[120%]');
-        };
+      this.toggleTelemetryBtn.onclick = () => {
+        this.telemetryPanel.classList.toggle('translate-y-[120%]');
+      };
     }
 
     if (this.closeTelemetryBtn && this.telemetryPanel) {
-        this.closeTelemetryBtn.onclick = () => {
-            this.telemetryPanel.classList.add('translate-y-[120%]');
-        };
+      this.closeTelemetryBtn.onclick = () => {
+        this.telemetryPanel.classList.add('translate-y-[120%]');
+      };
     }
 
     this.updateLabels();
@@ -269,6 +344,13 @@ class UIManager {
         this.sliderE.value = preset.e;
         if (this.presetSelect) this.presetSelect.value = val;
         if (this.presetSelectMobile) this.presetSelectMobile.value = val;
+
+        if (window.app) {
+          window.app.zoomLevel = 1.0;
+          window.app.panX = 0;
+          window.app.panY = 0;
+        }
+
         triggerUpdate();
       }
     };
@@ -311,6 +393,17 @@ class UIManager {
         this.modalFormulas.classList.add('hidden');
       }
     });
+
+    if (this.sliderSweepTime) {
+      this.sliderSweepTime.addEventListener('input', () => {
+        this.updateLabels();
+        this.onUpdate();
+      });
+    }
+
+    if (this.chkSemiMajorAxis) {
+      this.chkSemiMajorAxis.addEventListener('change', () => this.onUpdate());
+    }
   }
 
   updateLabels() {
@@ -318,6 +411,9 @@ class UIManager {
     this.valE.textContent = parseFloat(this.sliderE.value).toFixed(2);
     this.valSpeed.textContent = `${parseFloat(this.sliderSpeed.value).toFixed(1)}x`;
     this.valTrail.textContent = `${this.sliderTrail.value} pts`;
+    if (this.sliderSweepTime && this.valSweepTime) {
+      this.valSweepTime.textContent = `${parseFloat(this.sliderSweepTime.value).toFixed(2)} yrs`;
+    }
   }
 
   updateGeometryInfo(perihelion, aphelion, c) {
@@ -332,11 +428,13 @@ class UIManager {
       e: parseFloat(this.sliderE.value),
       speed: parseFloat(this.sliderSpeed.value),
       trailPts: parseInt(this.sliderTrail.value, 10),
+      sweepTime: this.sliderSweepTime ? parseFloat(this.sliderSweepTime.value) : 0.20,
       showOrbitPath: this.chkOrbitPath.checked,
       showArea: this.chkArea.checked,
       showVectors: this.chkVectors.checked,
       showFoci: this.chkFoci.checked,
-      showGrid: this.chkGrid ? this.chkGrid.checked : true
+      showGrid: this.chkGrid ? this.chkGrid.checked : true,
+      showSemiMajorAxis: this.chkSemiMajorAxis ? this.chkSemiMajorAxis.checked : false
     };
   }
 
@@ -363,6 +461,7 @@ class UIManager {
 // Main Simulation Application
 class SimulationApp {
   constructor() {
+    window.app = this;
     this.canvas = document.getElementById('sim-canvas');
     this.ctx = this.canvas.getContext('2d');
     this.engine = new OrbitEngine(CONFIG);
@@ -373,6 +472,7 @@ class SimulationApp {
     this.panY = 0;
     this.isDragging = false;
     this.dragStart = { x: 0, y: 0 };
+    this.simTimeYears = 0;
 
     this.ui = new UIManager(
       CONFIG, 
@@ -417,7 +517,6 @@ class SimulationApp {
       this.zoomLevel = Math.min(Math.max(this.zoomLevel * zoomFactor, 0.3), 5.0);
     }, { passive: false });
 
-    // Touch and Mouse Dragging
     const startDrag = (x, y) => {
       this.isDragging = true;
       this.dragStart = { x: x - this.panX, y: y - this.panY };
@@ -441,12 +540,15 @@ class SimulationApp {
       if (e.touches.length === 1) {
         startDrag(e.touches[0].clientX, e.touches[0].clientY);
       }
-    });
+    }, { passive: false });
+
     window.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 1) {
+      if (this.isDragging && e.touches.length === 1) {
+        e.preventDefault();
         moveDrag(e.touches[0].clientX, e.touches[0].clientY);
       }
-    });
+    }, { passive: false });
+
     window.addEventListener('touchend', endDrag);
   }
 
@@ -485,8 +587,18 @@ class SimulationApp {
     const uiState = this.ui.getValues();
 
     if (this.isRunning) {
-      const simDtYears = dt * 0.2 * uiState.speed;
-      this.engine.step(simDtYears, uiState.trailPts);
+      const totalSimDtYears = dt * 0.2 * uiState.speed;
+      this.simTimeYears += totalSimDtYears;
+
+      // Fine sub-stepping constraint (max step of ~4.4 hours)
+      const maxSubStep = 0.0005; 
+      const steps = Math.max(1, Math.ceil(totalSimDtYears / maxSubStep));
+      const subDt = totalSimDtYears / steps;
+
+      for (let s = 0; s < steps; s++) {
+        const subTime = this.simTimeYears - totalSimDtYears + subDt * (s + 1);
+        this.engine.step(subDt, uiState.trailPts, uiState.sweepTime, subTime);
+      }
     }
 
     this.render(uiState);
@@ -503,7 +615,8 @@ class SimulationApp {
     this.ctx.fillRect(0, 0, width, height);
 
     const minDim = Math.min(width, height);
-    const scale = ((minDim * 0.38) / CONFIG.LIMITS.A_MAX) * this.zoomLevel;
+    const currentAphelion = Math.max(0.1, this.engine.getAphelion());
+    const scale = ((minDim * 0.40) / currentAphelion) * this.zoomLevel;
     const centerX = width / 2 + this.panX;
     const centerY = height / 2 + this.panY;
 
@@ -515,21 +628,22 @@ class SimulationApp {
       this.drawPolarGrid(sunX, sunY, scale);
     }
 
+    // 1. Orbit Ellipse Line
     if (uiState.showOrbitPath) {
       this.ctx.beginPath();
       this.ctx.ellipse(
-        centerX, centerY, 
+        sunX - cPx, 
+        centerY, 
         Math.max(1, this.engine.a * scale), 
         Math.max(1, this.engine.getB() * scale), 
         0, 0, 2 * Math.PI
       );
       this.ctx.strokeStyle = CONFIG.CANVAS.ORBIT_COLOR;
       this.ctx.lineWidth = 1.5;
-      this.ctx.setLineDash([6, 4]);
       this.ctx.stroke();
-      this.ctx.setLineDash([]);
     }
 
+    // 2. Planet Motion Trail Line (Cyan)
     if (this.engine.trailHistory.length > 1) {
       this.ctx.beginPath();
       const first = this.engine.trailHistory[0];
@@ -544,34 +658,37 @@ class SimulationApp {
       this.ctx.stroke();
     }
 
-    if (uiState.showArea) {
-      const sweepRad = (CONFIG.DEFAULTS.SWEEP_ANGLE_DEG * Math.PI) / 180;
-      const startAngle = this.engine.trueAnomaly - sweepRad / 2;
-      const endAngle = this.engine.trueAnomaly + sweepRad / 2;
-
+    // 3. Swept Area Sector (Amber Wedge)
+    if (uiState.showArea && this.engine.sectorHistory && this.engine.sectorHistory.length > 1) {
       this.ctx.beginPath();
-      this.ctx.moveTo(sunX, sunY);
-      for (let angle = startAngle; angle <= endAngle; angle += 0.02) {
-        const pt = this.engine.getPosition(angle);
+      this.ctx.moveTo(sunX, sunY); // Start at Sun focus
+
+      for (let i = 0; i < this.engine.sectorHistory.length; i++) {
+        const pt = this.engine.sectorHistory[i].pos;
         this.ctx.lineTo(sunX + pt.x * scale, sunY + pt.y * scale);
       }
-      this.ctx.closePath();
+
+      this.ctx.closePath(); // Form clean closed sector back to Sun
       this.ctx.fillStyle = CONFIG.CANVAS.SWEEP_COLOR;
       this.ctx.fill();
     }
 
+    // 4. Secondary Focus
     if (uiState.showFoci) {
       this.ctx.fillStyle = CONFIG.CANVAS.FOCUS_COLOR;
+      
       this.ctx.beginPath();
-      this.ctx.arc(centerX + cPx, centerY, 4, 0, 2 * Math.PI);
+      this.ctx.arc(sunX - 2 * cPx, centerY, 5, 0, 2 * Math.PI);
       this.ctx.fill();
     }
 
+    // 5. Sun (Primary Focus)
     this.ctx.fillStyle = CONFIG.CANVAS.SUN_COLOR;
     this.ctx.beginPath();
     this.ctx.arc(sunX, sunY, 12, 0, 2 * Math.PI);
     this.ctx.fill();
 
+    // 6. Planet
     const pos = this.engine.getPosition();
     const planetX = sunX + pos.x * scale;
     const planetY = sunY + pos.y * scale;
@@ -581,26 +698,65 @@ class SimulationApp {
     this.ctx.arc(planetX, planetY, 7, 0, 2 * Math.PI);
     this.ctx.fill();
 
+    // 7. Physical Vectors
     if (uiState.showVectors) {
-      const theta = this.engine.trueAnomaly;
-      const mu = CONFIG.PHYSICS.G * CONFIG.PHYSICS.SUN_MASS;
-      const p = this.engine.a * (1 - this.engine.e * this.engine.e);
-      const vConst = Math.sqrt(mu / Math.max(0.0001, p));
-
-      const vr = vConst * this.engine.e * Math.sin(theta);
-      const vtheta = vConst * (1 + this.engine.e * Math.cos(theta));
-
-      const vx = vr * Math.cos(theta) - vtheta * Math.sin(theta);
-      const vy = vr * Math.sin(theta) + vtheta * Math.cos(theta);
-
+      // Velocity Vector (Green) scaled from (vx, vy)
       const vScale = 3.5;
-      this.drawArrow(planetX, planetY, planetX + vx * vScale, planetY + vy * vScale, CONFIG.CANVAS.VECTOR_VELOCITY);
+      this.drawArrow(
+        planetX, 
+        planetY, 
+        planetX + this.engine.vx * vScale, 
+        planetY + this.engine.vy * vScale, 
+        CONFIG.CANVAS.VECTOR_VELOCITY
+      );
 
+      // Force Vector towards Sun (Red)
       const fScale = 32;
       const dx = sunX - planetX;
       const dy = sunY - planetY;
       const len = Math.hypot(dx, dy) || 1;
-      this.drawArrow(planetX, planetY, planetX + (dx / len) * fScale, planetY + (dy / len) * fScale, CONFIG.CANVAS.VECTOR_FORCE);
+      this.drawArrow(
+        planetX, 
+        planetY, 
+        planetX + (dx / len) * fScale, 
+        planetY + (dy / len) * fScale, 
+        CONFIG.CANVAS.VECTOR_FORCE
+      );
+    }
+
+    // Render Semi-Major Axis (a) Segment Line and Label
+    if (uiState.showSemiMajorAxis) {
+      const cPx = this.engine.getC() * scale;
+      const aPx = this.engine.a * scale;
+      const ellipseCenterX = sunX - cPx;
+
+      this.ctx.save();
+      
+      // Semi-major axis line passing through the ellipse center across length 'a'
+      this.ctx.beginPath();
+      this.ctx.moveTo(ellipseCenterX, centerY);
+      this.ctx.lineTo(ellipseCenterX + aPx, centerY);
+      this.ctx.strokeStyle = '#ec4899'; // Bright Pink Line
+      this.ctx.lineWidth = 2;
+      this.ctx.setLineDash([6, 4]); // Dashed line style
+      this.ctx.stroke();
+
+      // Draw end ticks
+      this.ctx.setLineDash([]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(ellipseCenterX, centerY - 6);
+      this.ctx.lineTo(ellipseCenterX, centerY + 6);
+      this.ctx.moveTo(ellipseCenterX + aPx, centerY - 6);
+      this.ctx.lineTo(ellipseCenterX + aPx, centerY + 6);
+      this.ctx.stroke();
+
+      // Label text "a = X.XX AU"
+      this.ctx.fillStyle = '#ec4899';
+      this.ctx.font = '12px Inter, sans-serif';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText(`a = ${this.engine.a.toFixed(2)} AU`, ellipseCenterX + aPx / 2, centerY - 10);
+
+      this.ctx.restore();
     }
   }
 
@@ -608,9 +764,17 @@ class SimulationApp {
     this.ctx.strokeStyle = CONFIG.CANVAS.GRID_COLOR;
     this.ctx.lineWidth = 1;
 
-    for (let r = 1; r <= CONFIG.LIMITS.A_MAX; r++) {
+    const maxRadiusPx = Math.hypot(
+      Math.max(cx, this.canvas.width - cx),
+      Math.max(cy, this.canvas.height - cy)
+    );
+
+    const stepAu = 1.0;
+    const stepPx = stepAu * scale;
+
+    for (let rPx = stepPx; rPx <= maxRadiusPx; rPx += stepPx) {
       this.ctx.beginPath();
-      this.ctx.arc(cx, cy, r * scale, 0, 2 * Math.PI);
+      this.ctx.arc(cx, cy, rPx, 0, 2 * Math.PI);
       this.ctx.stroke();
     }
 
@@ -618,7 +782,10 @@ class SimulationApp {
       const rad = (angle * Math.PI) / 180;
       this.ctx.beginPath();
       this.ctx.moveTo(cx, cy);
-      this.ctx.lineTo(cx + Math.cos(rad) * CONFIG.LIMITS.A_MAX * scale, cy + Math.sin(rad) * CONFIG.LIMITS.A_MAX * scale);
+      this.ctx.lineTo(
+        cx + Math.cos(rad) * maxRadiusPx, 
+        cy + Math.sin(rad) * maxRadiusPx
+      );
       this.ctx.stroke();
     }
   }

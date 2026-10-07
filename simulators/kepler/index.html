@@ -167,6 +167,22 @@
                         </div>
                         <input type="range" id="trail-length" class="w-full bg-slate-800 rounded-lg h-1.5 cursor-pointer">
                     </div>
+                    <!-- Sweep Duration Control -->
+                    <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <label for="sweep-time">Sweep Duration ($\Delta t$)</label>
+                        <span id="val-sweep-time" class="text-amber-400 font-mono">0.20 yrs</span>
+                    </div>
+                    <input
+                        type="range"
+                        id="sweep-time"
+                        min="0.05"
+                        max="0.50"
+                        step="0.01"
+                        value="0.20"
+                        class="w-full accent-amber-500 bg-slate-800 rounded-lg cursor-pointer h-1.5"
+                    />
+                    </div>
                 </div>
             </div>
 
@@ -199,6 +215,10 @@
                         <input type="checkbox" id="show-grid" checked class="rounded border-slate-700 text-amber-500 focus:ring-0">
                         <span>Show Polar Grid</span>
                     </label>
+                    <label class="flex items-center gap-2.5 cursor-pointer hover:text-white">
+                        <input type="checkbox" id="show-semi-major-axis" class="rounded border-slate-700 text-amber-500 focus:ring-0" />
+                        <span>Semi-Major Axis (a)</span>
+                    </label>
                 </div>
             </div>
 
@@ -227,7 +247,7 @@
             </div>
 
             <!-- Canvas element -->
-            <canvas id="sim-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+            <canvas id="sim-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing touch-none"></canvas>
 
             <!-- Collapsible Mobile Telemetry Panel Button -->
             <button id="btn-toggle-telemetry" class="md:hidden absolute bottom-16 right-4 z-30 glass-panel p-3 rounded-full border border-slate-700 text-indigo-400 shadow-2xl flex items-center justify-center">
