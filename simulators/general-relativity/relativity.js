@@ -14,7 +14,8 @@ const state = {
     massSolar: 10,           // Black hole mass in solar masses (M☉)
     particleType: 'massive', // 'massive' or 'photon'
     initialSpeedC: 0.18,     // Speed relative to c
-    simSpeed: 1.0,           // Simulation time speed multiplier
+    simSpeed: 1.0,           // Simulation time speed multiplier    
+    impactFactor: 1.8,
     trailMaxLength: 3000,    // Path trajectory history
     showGrid: true,
     showHorizons: true,
@@ -115,9 +116,10 @@ function loadPreset(presetKey) {
             state.alpha = 1.0;
             state.massSolar = 10;
             state.initialSpeedC = 1.0;
+            state.impactFactor = 1.001; // Sync preset impact factor
             
             const startR = 12.0 * rs;
-            const impactParameter = radii.bCrit * 1.001; 
+            const impactParameter = radii.bCrit * state.impactFactor; 
             const vr = -C * Math.sqrt(Math.max(0, 1 - Math.pow(impactParameter / startR, 2)));
             const vphi = (C * impactParameter) / Math.pow(startR, 2);
             
@@ -141,9 +143,10 @@ function loadPreset(presetKey) {
             state.alpha = 1.0;
             state.massSolar = 10;
             state.initialSpeedC = 1.0;
+            state.impactFactor = 1.8; // Sync preset impact factor
             
             const startR = 12.0 * rs;
-            const impactParameter = radii.bCrit * 1.8;
+            const impactParameter = radii.bCrit * state.impactFactor;
             const vr = -C * Math.sqrt(Math.max(0, 1 - Math.pow(impactParameter / startR, 2)));
             const vphi = (C * impactParameter) / Math.pow(startR, 2);
             
@@ -260,6 +263,13 @@ function syncControlsWithState() {
     if (sliderSpeed) {
         sliderSpeed.value = state.initialSpeedC;
         document.getElementById('disp-speed').innerText = `${state.initialSpeedC.toFixed(3)} c`;
+    }
+
+    const sliderImpact = document.getElementById('slider-impact');
+    if (sliderImpact) {
+        sliderImpact.value = state.impactFactor;
+        const dispImpact = document.getElementById('disp-impact');
+        if (dispImpact) dispImpact.innerText = `${state.impactFactor.toFixed(2)} bₖ`; // or b_crit
     }
 
     const btnMassive = document.getElementById('btn-type-massive');
@@ -423,6 +433,32 @@ function renderKaTeX() {
     });
 }
 
+function updateParticleByImpactParameter() {
+    if (!state.particle) return;
+    const radii = getSchwarzschildRadii();
+
+    if (state.particleType === 'photon') {
+        // Photon scattering calculation (uses speed of light C)
+        const startR = 12.0 * radii.rs;
+        const b = state.impactFactor * radii.bCrit;
+        const term = 1 - Math.pow(b / startR, 2);
+        const vr = -C * Math.sqrt(Math.max(0, term));
+        const vphi = (C * b) / Math.pow(startR, 2);
+
+        state.particle.r = startR;
+        state.particle.vr = vr;
+        state.particle.vphi = vphi;
+    } else {
+        // Massive body (Mercury/ISCO): scale angular velocity safely without forcing speed to C
+        const currentSpeed = state.initialSpeedC * C;
+        state.particle.vphi = currentSpeed / state.particle.r;
+    }
+    
+    state.trail = [];
+    state.lastPeriapsisPhi = null;
+    state.precessionShiftDeg = 0.0;
+}
+
 /**
  * Initialize Event Listeners (including Touch / Pointer Events for Canvas Dragging)
  */
@@ -563,6 +599,21 @@ function setupEventListeners() {
     if (closeTelemetryBtn && telemetryPanel) {
         closeTelemetryBtn.onclick = () => {
             telemetryPanel.classList.add('translate-y-[120%]');
+        };
+    }
+
+    const sliderImpact = document.getElementById('slider-impact');
+    if (sliderImpact) {
+        sliderImpact.oninput = (e) => {
+            // Automatically switch to photon mode if user adjusts impact parameter
+            if (state.particleType !== 'photon') {
+                state.particleType = 'photon';
+                syncControlsWithState(); // Updates button highlights
+            }
+
+            state.impactFactor = parseFloat(e.target.value);
+            document.getElementById('disp-impact').innerText = `${state.impactFactor.toFixed(2)} bₖ`;
+            updateParticleByImpactParameter();
         };
     }
 

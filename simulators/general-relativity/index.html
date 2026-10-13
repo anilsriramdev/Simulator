@@ -222,6 +222,15 @@
                     </div>
                 </div>
 
+                <!-- Impact Parameter Control Container -->
+                <div id="impact-container" class="space-y-2 pt-2 border-t border-slate-800">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-slate-300">Impact Parameter (<span class="katex-inline" data-formula="b / b_{\text{crit}}"></span>)</span>
+                        <span id="disp-impact" class="mono text-amber-400 font-semibold">1.80 b_crit</span>
+                    </div>
+                    <input type="range" id="slider-impact" min="0.5" max="3.0" step="0.01" value="1.8" class="w-full cursor-pointer">
+                </div>
+
                 <!-- Initial Velocity Vector Controls -->
                 <div class="space-y-2 pt-2 border-t border-slate-800">
                     <div class="flex justify-between items-center">
@@ -368,6 +377,12 @@
                     <span class="text-rose-400 font-bold block mb-1">3. Gravitational Time Dilation</span>
                     <div class="bg-slate-900/80 p-2.5 rounded-lg text-slate-200 text-center my-1 text-sm py-3 katex-block" data-formula="t_0 = t_f \sqrt{1 - \frac{r_s}{r}}"></div>
                     <p class="text-slate-400 mt-1">Time slows down for an observer closer to a massive gravitational body relative to an observer at infinity.</p>
+                </div>
+
+                <div class="glass-card p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-amber-400 font-bold block mb-1">Critical Impact Parameter for Light (<span class="katex-inline" data-formula="b_{\text{crit}}"></span>)</span>
+                    <div class="bg-slate-900/80 p-2.5 rounded-lg text-slate-200 text-center my-1 text-sm py-3 katex-block" data-formula="b_{\text{crit}} = \frac{3\sqrt{3}}{2} r_s = \frac{3\sqrt{3}GM}{c^2}"></div>
+                    <p class="text-slate-400 mt-1">Defines the boundary between light escaping into space or getting captured by the photon sphere.</p>
                 </div>
 
             </div>
