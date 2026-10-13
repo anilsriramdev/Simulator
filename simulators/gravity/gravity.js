@@ -951,6 +951,30 @@ function setupEventListeners() {
     };
     document.getElementById('btn-close-quiz').onclick = () => quizModal.classList.add('hidden');
 
+    // SEO Guide Modal Handlers
+    const seoModal = document.getElementById('modal-seo-guide');
+    const btnOpenSeo = document.getElementById('btn-open-seo');
+    const btnCloseSeo = document.getElementById('btn-close-seo');
+
+    if (btnOpenSeo && seoModal) {
+        btnOpenSeo.onclick = () => {
+            seoModal.classList.remove('hidden');
+            renderKaTeX();
+        };
+    }
+    if (btnCloseSeo && seoModal) {
+        btnCloseSeo.onclick = () => {
+            seoModal.classList.add('hidden');
+        };
+    }
+    if (seoModal) {
+        seoModal.onclick = (e) => {
+            if (e.target === seoModal) {
+                seoModal.classList.add('hidden');
+            }
+        };
+    }
+
     // Velocity Calculator
     const calcR = document.getElementById('calc-r');
     const calcM = document.getElementById('calc-m');

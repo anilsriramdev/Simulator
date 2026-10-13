@@ -409,9 +409,17 @@ function updateUI() {
 
 function renderKaTeX() {
     if (typeof katex === 'undefined') return;
+
+    // Render block equations
     document.querySelectorAll('.katex-block').forEach(el => {
         const formula = el.getAttribute('data-formula');
         if (formula) katex.render(formula, el, { throwOnError: false, displayMode: true });
+    });
+
+    // Render inline math variables (fixes the empty parentheses issue)
+    document.querySelectorAll('.katex-inline').forEach(el => {
+        const formula = el.getAttribute('data-formula');
+        if (formula) katex.render(formula, el, { throwOnError: false, displayMode: false });
     });
 }
 
@@ -555,6 +563,30 @@ function setupEventListeners() {
     if (closeTelemetryBtn && telemetryPanel) {
         closeTelemetryBtn.onclick = () => {
             telemetryPanel.classList.add('translate-y-[120%]');
+        };
+    }
+
+    // SEO Guide Modal Handlers
+    const seoModal = document.getElementById('modal-seo-guide');
+    const btnOpenSeo = document.getElementById('btn-open-seo');
+    const btnCloseSeo = document.getElementById('btn-close-seo');
+
+    if (btnOpenSeo && seoModal) {
+        btnOpenSeo.onclick = () => {
+            seoModal.classList.remove('hidden');
+            renderKaTeX(); // Renders all katex-block and katex-inline elements
+        };
+    }
+    if (btnCloseSeo && seoModal) {
+        btnCloseSeo.onclick = () => {
+            seoModal.classList.add('hidden');
+        };
+    }
+    if (seoModal) {
+        seoModal.onclick = (e) => {
+            if (e.target === seoModal) {
+                seoModal.classList.add('hidden');
+            }
         };
     }
 }

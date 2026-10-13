@@ -3,7 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kepler's Laws Lab | Interactive Physics Lab</title>
+    
+    <!-- SEO Meta Tags -->
+    <title>Kepler's Laws Interactive Simulator & Orbital Mechanics Lab | Interact Physics</title>
+    <meta name="description" content="Explore Kepler's three laws of planetary motion, elliptical orbits, and areal velocity with this free browser-based interactive physics simulator for students and teachers.">
+    <meta name="keywords" content="Kepler's laws simulator, orbital mechanics lab, interactive physics education, planetary motion visualizer, N-body gravity app">
+    <link rel="canonical" href="https://interactphysics.com/simulators/kepler/">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:title" content="Kepler's Laws Interactive Simulator | Interact Physics">
+    <meta property="og:description" content="Visualize planetary motion, eccentricity, and equal area sweeps live in your browser.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://interactphysics.com/simulators/kepler/">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -99,6 +110,10 @@
                 <!-- Formulas Modal Button -->
                 <button id="btn-open-formulas" class="p-2 sm:px-3 sm:py-1.5 rounded-xl font-semibold bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5" title="Kepler Equations">
                     <i class="fa-solid fa-graduation-cap text-sm"></i> <span class="hidden sm:inline">Formulas</span>
+                </button>
+
+                <button id="btn-open-seo" class="p-2 sm:px-3 sm:py-1.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5" title="About Lab">
+                    <i class="fa-solid fa-circle-info text-sm text-amber-400"></i> <span class="hidden sm:inline">Guide</span>
                 </button>
 
                 <!-- Buy Me a Coffee Support Button -->
@@ -338,6 +353,57 @@
                     <div class="text-center py-2 text-sm text-slate-100 bg-slate-950/80 rounded-lg border border-slate-800/80">
                         $$T^2 = \left(\frac{4\pi^2}{G M_\odot}\right) a^3 \implies \frac{T^2}{a^3} = 1.00 \quad [\text{Solar Units}]$$
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEO & Educational Guide Modal -->
+    <div id="modal-seo-guide" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel max-w-3xl w-full rounded-2xl border border-slate-700/80 p-6 space-y-6 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-amber-500/10 text-amber-400 p-2.5 rounded-xl border border-amber-500/20 text-xl">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">About Kepler's Laws Interactive Simulator</h3>
+                        <p class="text-xs text-slate-400">Educational Guide & Celestial Mechanics Overview</p>
+                    </div>
+                </div>
+                <button id="btn-close-seo" class="text-slate-400 hover:text-white text-lg p-2 rounded-lg cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- SEO Keyword-Rich Content Block -->
+            <div class="space-y-4 text-xs text-slate-300 overflow-y-auto max-h-[60vh] pr-2 leading-relaxed">
+                <p>
+                    Welcome to the <strong>Kepler's Laws Interactive Simulator</strong> hosted on <a href="https://interactphysics.com/" class="text-amber-400 underline">Interact Physics</a>. This free browser-based educational lab is built for physics students, astronomy hobbyists, and teachers looking to explore celestial mechanics and planetary motion in real-time without installing desktop software.
+                </p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+                        <h4 class="font-bold text-amber-400">1st Law: Ellipses</h4>
+                        <p class="text-[11px] text-slate-400">Examine how orbital eccentricity ($e$) and the semi-major axis ($a$) dictate elliptical orbits with the Sun at one focus.</p>
+                    </div>
+                    <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+                        <h4 class="font-bold text-amber-400">2nd Law: Equal Areas</h4>
+                        <p class="text-[11px] text-slate-400">Visualize areal velocity conservation, noting how planets accelerate near perihelion and decelerate near aphelion.</p>
+                    </div>
+                    <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+                        <h4 class="font-bold text-amber-400">3rd Law: Harmonics</h4>
+                        <p class="text-[11px] text-slate-400">Verify the mathematical constant where the square of the orbital period scales with the cube of the radius ($T^2 \propto a^3$).</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 space-y-2 mt-2">
+                    <h4 class="font-semibold text-slate-200">How to Use This Simulation Lab</h4>
+                    <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+                        <li>Adjust sliders for eccentricity and semi-major axis to change orbital geometry dynamically.</li>
+                        <li>Toggle visual overlays to inspect velocity vectors, focal points, and polar grids.</li>
+                        <li>Ideal for high school physics classrooms, introductory college astronomy labs, and self-directed STEM learning.</li>
+                    </ul>
                 </div>
             </div>
         </div>

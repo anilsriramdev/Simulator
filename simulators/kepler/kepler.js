@@ -231,6 +231,11 @@ class UIManager {
     this.btnCloseFormulas = document.getElementById('btn-close-formulas');
     this.modalFormulas = document.getElementById('modal-formulas');
 
+    // SEO / Educational Guide Modal Elements
+    this.btnOpenSeo = document.getElementById('btn-open-seo');
+    this.btnCloseSeo = document.getElementById('btn-close-seo');
+    this.modalSeo = document.getElementById('modal-seo-guide');
+
     this.valA = document.getElementById('val-a');
     this.valE = document.getElementById('val-e');
     this.valSpeed = document.getElementById('val-speed');
@@ -394,6 +399,30 @@ class UIManager {
       }
     });
 
+    // SEO Guide Modal Event Bindings
+    if (this.btnOpenSeo && this.modalSeo) {
+      this.btnOpenSeo.addEventListener('click', () => {
+        this.modalSeo.classList.remove('hidden');
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise([this.modalSeo]).catch((err) => console.log(err));
+        }
+      });
+    }
+
+    if (this.btnCloseSeo && this.modalSeo) {
+      this.btnCloseSeo.addEventListener('click', () => {
+        this.modalSeo.classList.add('hidden');
+      });
+    }
+
+    if (this.modalSeo) {
+      this.modalSeo.addEventListener('click', (e) => {
+        if (e.target === this.modalSeo) {
+          this.modalSeo.classList.add('hidden');
+        }
+      });
+    }
+
     if (this.sliderSweepTime) {
       this.sliderSweepTime.addEventListener('input', () => {
         this.updateLabels();
@@ -446,7 +475,7 @@ class UIManager {
     } else {
       this.lblStart.textContent = 'Start';
       this.btnToggleSim.firstElementChild.className = 'fa-solid fa-play';
-      this.btnToggleSim.className = 'px-3.5 py-1.5 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30 transition flex items-center gap-1.5 shadow-md shadow-emerald-500/20';
+      this.btnToggleSim.className = 'px-3.5 py-1.5 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30 transition flex items-center gap-1.5 shadow-md shadow-amber-500/20';
     }
   }
 
@@ -621,11 +650,11 @@ class SimulationApp {
     const centerY = height / 2 + this.panY;
 
     const cPx = this.engine.getC() * scale;
-    const sunX = centerX - cPx;
+    const sunX = centerX;
     const sunY = centerY;
 
     if (uiState.showGrid) {
-      this.drawPolarGrid(sunX, sunY, scale);
+      this.drawPolarGrid(centerX, centerY, scale);
     }
 
     // 1. Orbit Ellipse Line
