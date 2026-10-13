@@ -15,7 +15,7 @@ const state = {
     running: false,
     timeScale: 1.0,         // Time speed multiplier
     gFactor: 1.0,           // Multiplier for G
-    trailMaxLength: 500,    // Points in trajectory tail
+    trailMaxLength: 2000,    // Points in trajectory tail
     collisionMode: 'merge', // 'merge', 'bounce', or 'ghost'
     showGrid: true,
     showTrails: true,
@@ -90,8 +90,8 @@ function loadPreset(presetKey) {
     }
     else if (presetKey === 'comet') {
         state.bodies.push(new CelestialBody('Sun', M_SUN, 0, 0, 0, 0, '#f59e0b', 18, true));
-        state.bodies.push(new CelestialBody('Comet Halley', 1e16, 2.4 * AU, 0, 0, 11500, '#a7f3d0', 5, false));
-        state.zoom = 2.6;
+        state.bodies.push(new CelestialBody('Comet Halley', 2.2e14, 0.586 * AU, 0, 0, 54500, '#a7f3d0', 5, false));
+        state.zoom = 12.0; // Zoomed out to view the full elliptical path
         state.selectedBodyIndex = 1;
     }
     else if (presetKey === 'escape') {
@@ -179,9 +179,6 @@ function computeAccelerations() {
 function handleCollisions() {
     if (state.collisionMode === 'ghost') return;
 
-    const canvasWidth = canvas.width / state.dpr;
-    const scale = (canvasWidth / 2) / (state.zoom * AU);
-
     for (let i = 0; i < state.bodies.length; i++) {
         for (let j = i + 1; j < state.bodies.length; j++) {
             const b1 = state.bodies[i];
@@ -191,8 +188,11 @@ function handleCollisions() {
             const dy = b2.y - b1.y;
             const distMeters = Math.sqrt(dx * dx + dy * dy);
 
-            const visualRadiusMeters = (b1.radius + b2.radius) / scale;
-            const collisionDist = Math.max(visualRadiusMeters, 1e8);
+            // Use true physical radii in meters (independent of zoom scale)
+            // Sun (~696,340 km), Earth/Planets (~6,371 km), Comet/Probes (~10 km)
+            const r1 = b1.isFixed ? 7e8 : (b1.mass > 1e25 ? 2e7 : 1e6);
+            const r2 = b2.isFixed ? 7e8 : (b2.mass > 1e25 ? 2e7 : 1e6);
+            const collisionDist = Math.max(r1 + r2, 1e7);
 
             if (distMeters < collisionDist) {
                 if (state.collisionMode === 'merge') {
@@ -1025,7 +1025,7 @@ function resizeCanvas() {
  */
 function animate() {
     if (state.running) {
-        const subSteps = 8;
+        const subSteps = 32;
         const dt = (DAY_SEC * 0.25 * state.timeScale) / subSteps;
         for (let i = 0; i < subSteps; i++) {
             physicsStep(dt);
