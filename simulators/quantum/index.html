@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>Quantum Wave Packet & Double-Slit Simulator | Interact Physics</title>
+    <meta name="description" content="Explore quantum mechanics, time-dependent Schrödinger equation (TDSE), wave packet tunneling, and double-slit interference in real time with this interactive HTML5 physics lab.">
+    <link rel="canonical" href="https://interactphysics.com/simulators/quantum-mechanics/">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- KaTeX Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background-color: #030712;
+            color: #e2e8f0;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 3px;
+        }
+        .glass-panel {
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #1e293b;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -5px;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+        }
+        .katex { font-size: 0.95em; }
+        #sidebar-panel {
+            transition: transform 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col select-none overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="glass-panel z-20 px-3 py-2 flex items-center justify-between flex-wrap md:flex-nowrap gap-2 border-b border-slate-800 shrink-0">
+        <!-- Left Group: Branding & Back -->
+        <div class="flex items-center space-x-2 shrink-0 md:w-1/3">
+            <button id="btn-toggle-sidebar" class="md:hidden bg-slate-800 hover:bg-slate-700 text-sky-400 p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 flex-shrink-0">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <a href="../../index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700 flex-shrink-0" title="Return to Catalog">
+                <i class="fa-solid fa-arrow-left"></i> <span class="hidden sm:inline">Catalog</span>
+            </a>
+            
+            <div class="bg-gradient-to-tr from-sky-600 to-indigo-600 p-1.5 rounded-lg text-white shadow-lg shadow-sky-500/20 flex-shrink-0 hidden xs:block">
+                <i class="fa-solid fa-atom text-base animate-spin" style="animation-duration: 8s;"></i>
+            </div>
+
+            <div class="min-w-0">
+                <h1 class="font-bold text-xs sm:text-sm tracking-wide text-white truncate">Quantum Wave Packet Lab</h1>
+                <p class="text-[10px] text-slate-400 truncate hidden sm:block">TDSE FDTD 2D Grid Solver</p>
+            </div>
+        </div>
+
+        <!-- Center Group: Simulation Play, Reset & Presets -->
+        <div class="w-full md:w-auto flex items-center justify-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800 shrink-0 order-3 md:order-none overflow-x-auto">
+            <button id="btn-play" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm shrink-0">
+                <i class="fa-solid fa-play text-[10px]"></i> <span id="lbl-play" class="inline">Start</span>
+            </button>
+            <button id="btn-reset" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 transition shrink-0" title="Reset">
+                <i class="fa-solid fa-rotate-left text-[10px]"></i> <span class="hidden xs:inline">Reset</span>
+            </button>
+
+            <!-- Preset Selector -->
+            <select id="preset-select" class="bg-slate-800 text-[11px] text-slate-200 border border-slate-700 rounded-lg px-2 py-1 focus:outline-none focus:border-sky-500 shrink-0 cursor-pointer">
+                <option value="double-slit">Preset: Double-Slit Interference</option>
+                <option value="barrier">Preset: Quantum Barrier Tunneling</option>
+                <option value="step">Preset: Potential Step Reflection</option>
+                <option value="corral">Preset: Quantum Corral / Box</option>
+                <option value="free">Preset: Free Wave Packet</option>
+            </select>
+        </div>
+
+        <!-- Right Group: Modals & Support -->
+        <div class="flex items-center justify-end space-x-1 shrink-0 order-2 md:order-none md:w-1/3">
+            <button id="btn-math-modal" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 p-2 md:px-3 md:py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition" title="Schrödinger Equation">
+                <i class="fa-solid fa-graduation-cap"></i> <span class="hidden md:inline">Formulas</span>
+            </button>
+            <button id="btn-open-seo" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 p-2 md:px-3 md:py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition" title="About Lab">
+                <i class="fa-solid fa-circle-info text-sky-400"></i> <span class="hidden md:inline">Guide</span>
+            </button>
+            <a href="https://www.buymeacoffee.com/interactphysics" target="_blank" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 p-2 md:px-3 md:py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition" title="Support this project">
+                <span>☕</span> <span class="hidden md:inline">Support</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex relative overflow-hidden">
+
+        <!-- Left Sidebar: Controls & Inspector -->
+        <aside id="sidebar-panel" class="absolute md:relative inset-y-0 left-0 z-40 w-85 md:w-80 glass-panel border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto transform -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
+            <div class="p-3.5 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-sky-400"></i> Wave Mechanics Controls
+                </h2>
+                <button id="btn-close-sidebar" class="md:hidden text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Preset Selector -->
+            <div class="p-4 md:hidden border-b border-slate-800 bg-slate-900/20">
+                <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Simulation Presets</label>
+                <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5">
+                    <i class="fa-solid fa-sliders text-xs text-sky-400"></i>
+                    <select id="preset-select-mobile" class="bg-slate-900 text-xs text-slate-200 outline-none w-full py-0.5 cursor-pointer">
+                        <option value="double-slit">Preset: Double-Slit Interference</option>
+                        <option value="barrier">Preset: Quantum Barrier Tunneling</option>
+                        <option value="step">Preset: Potential Step Reflection</option>
+                        <option value="corral">Preset: Quantum Corral / Box</option>
+                        <option value="free">Preset: Free Wave Packet</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="p-4 space-y-5 text-xs flex-1">
+                <!-- Simulation Speed -->
+                <div>
+                    <div class="flex justify-between text-slate-300 mb-1">
+                        <span class="font-medium">Calculation Speed</span>
+                        <span id="disp-sim-speed" class="mono text-sky-300 font-semibold">2.0x</span>
+                    </div>
+                    <input type="range" id="slider-sim-speed" min="0.5" max="5.0" step="0.5" value="2.0" class="w-full cursor-pointer">
+                </div>
+
+                <!-- Wave Packet Momentum -->
+                <div class="pt-2 border-t border-slate-800">
+                    <div class="flex justify-between text-slate-300 mb-1">
+                        <span class="font-medium">Packet Momentum ($k_x$)</span>
+                        <span id="disp-momentum" class="mono text-sky-300 font-semibold">4.50</span>
+                    </div>
+                    <input type="range" id="slider-momentum" min="1.0" max="8.0" step="0.1" value="4.5" class="w-full cursor-pointer">
+                </div>
+
+                <!-- Potential Barrier Height -->
+                <div>
+                    <div class="flex justify-between text-slate-300 mb-1">
+                        <span class="font-medium">Barrier Potential ($V_0$)</span>
+                        <span id="disp-potential" class="mono text-amber-300 font-semibold">3.00 eV</span>
+                    </div>
+                    <input type="range" id="slider-potential" min="0.5" max="6.0" step="0.1" value="3.0" class="w-full cursor-pointer">
+                </div>
+
+                <!-- Canvas Draw Tool -->
+                <div class="space-y-2 pt-2 border-t border-slate-800">
+                    <label class="font-medium text-slate-300 block">Canvas Draw Tool</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-tool-wall" class="py-1.5 rounded-lg bg-sky-600 text-white font-semibold text-xs border border-sky-500/50 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-paintbrush"></i> Draw Barrier
+                        </button>
+                        <button id="btn-tool-eraser" class="py-1.5 rounded-lg bg-slate-800 text-slate-400 font-semibold text-xs border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-eraser"></i> Erase Wall
+                        </button>
+                    </div>
+                    <button id="btn-clear-potentials" class="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition mt-1 cursor-pointer">
+                        Clear All Barriers
+                    </button>
+                </div>
+
+                <!-- Visualization Mode -->
+                <div class="pt-2 border-t border-slate-800 space-y-2 text-xs">
+                    <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Visualization Mode</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-view-prob" class="py-1.5 rounded-lg font-semibold bg-sky-600 text-white border border-sky-500/40 cursor-pointer">
+                            Probability
+                        </button>
+                        <button id="btn-view-phase" class="py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-400 border border-slate-700 cursor-pointer">
+                            Complex Phase
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FDTD Metrics -->
+                <div class="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-xl p-3 mb-4 space-y-2">
+                    <div class="text-[10px] font-semibold text-sky-400 uppercase tracking-wider">FDTD Solver Metrics:</div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Grid Resolution</span>
+                        <span class="mono text-slate-200">160 × 160</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Norm Conservation</span>
+                        <span id="disp-norm" class="mono text-emerald-400">1.0000</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Interactive Viewport -->
+        <main class="flex-1 relative bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
+            <canvas id="sim-canvas" class="w-full h-full cursor-crosshair block touch-none"></canvas>
+
+            <!-- Floating Top Zoom Controls -->
+            <div class="absolute top-4 right-4 z-10 glass-panel p-1 rounded-xl border border-slate-800/80 flex flex-col gap-1 text-slate-300 shadow-xl">
+                <button id="btn-recenter" class="p-2 hover:bg-slate-800 hover:text-sky-400 rounded-lg transition cursor-pointer" title="Reset View">
+                    <i class="fa-solid fa-compress text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Collapsible Mobile Telemetry Button -->
+            <button id="btn-toggle-telemetry" class="md:hidden absolute bottom-16 right-4 z-30 glass-panel p-3 rounded-full border border-slate-700 text-sky-400 shadow-2xl flex items-center justify-center">
+                <i class="fa-solid fa-chart-line text-base"></i>
+            </button>
+
+            <!-- Bottom Telemetry HUD -->
+            <div id="telemetry-panel" class="absolute bottom-16 left-2 right-2 md:bottom-4 md:left-3 md:right-3 z-10 glass-panel rounded-2xl p-3 border border-slate-800/90 pointer-events-auto max-w-4xl mx-auto shadow-2xl transition-all duration-300 translate-y-[120%] md:translate-y-0">
+                <div class="flex justify-between items-center mb-1.5 px-1 md:hidden">
+                    <span class="text-xs font-semibold text-sky-300">Quantum Telemetry</span>
+                    <button id="btn-close-telemetry" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <div class="glass-card p-2 rounded-xl border border-slate-800">
+                        <div class="text-[8px] sm:text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Expectation Value $\langle x \rangle$</div>
+                        <div id="hud-exp-x" class="mono text-xs sm:text-sm font-bold text-sky-400">0.00 nm</div>
+                    </div>
+                    <div class="glass-card p-2 rounded-xl border border-slate-800">
+                        <div class="text-[8px] sm:text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Transmission ($T$)</div>
+                        <div id="hud-transmission" class="mono text-xs sm:text-sm font-bold text-emerald-400">0.00%</div>
+                    </div>
+                    <div class="glass-card p-2 rounded-xl border border-slate-800">
+                        <div class="text-[8px] sm:text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Reflection ($R$)</div>
+                        <div id="hud-reflection" class="mono text-xs sm:text-sm font-bold text-amber-400">100.0%</div>
+                    </div>
+                    <div class="glass-card p-2 rounded-xl border border-slate-800">
+                        <div class="text-[8px] sm:text-[9px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Uncertainty $\Delta x \cdot \Delta p$</div>
+                        <div id="hud-uncertainty" class="mono text-xs sm:text-sm font-bold text-purple-400">0.52 $\hbar$</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Formulas Modal -->
+    <div id="math-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-panel w-full max-w-3xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/60">
+                <div class="flex items-center gap-2">
+                    <div class="bg-sky-500/20 text-sky-400 p-2 rounded-lg">
+                        <i class="fa-solid fa-graduation-cap text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-white">Quantum Mechanics Equations</h3>
+                        <p class="text-xs text-slate-400">Time-Dependent Schrödinger Equation & FDTD Method</p>
+                    </div>
+                </div>
+                <button id="btn-close-math" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 overflow-y-auto text-xs">
+                <div class="glass-card p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-sky-400 font-bold block mb-1">Time-Dependent Schrödinger Equation (TDSE)</span>
+                    <div class="bg-slate-900/80 p-2.5 rounded-lg text-slate-200 text-center my-1 text-sm py-3 katex-block" data-formula="i\hbar \frac{\partial \psi}{\partial t} = \left( -\frac{\hbar^2}{2m} \nabla^2 + V(x,y) \right) \psi"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guide Modal -->
+    <div id="modal-seo-guide" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-panel w-full max-w-3xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/60">
+                <div class="flex items-center gap-2">
+                    <div class="bg-sky-500/20 text-sky-400 p-2 rounded-lg">
+                        <i class="fa-solid fa-book-open text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-white">About Quantum Wave Packet Lab</h3>
+                        <p class="text-xs text-slate-400">Educational Guide</p>
+                    </div>
+                </div>
+                <button id="btn-close-seo" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 overflow-y-auto text-xs text-slate-300 leading-relaxed">
+                <p>Welcome to the <strong>Quantum Wave Packet & Double-Slit Simulator</strong>. Select presets from the top menu or sidebar to observe wave interference, tunneling, and scattering in real time.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="schrodinger.js"></script>
+</body>
+</html>

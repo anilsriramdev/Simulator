@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kerr Rotating Black Hole & Frame-Dragging Lab | Interact Physics</title>
+    <meta name="description" content="Explore rotating Kerr black holes, frame-dragging, ergospheres, and relativistic geodesics in Boyer-Lindquist coordinates.">
+    <link rel="canonical" href="https://interactphysics.com/simulators/kerr-black-hole/">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #030712; color: #e2e8f0; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: rgba(10, 15, 30, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-card { background: rgba(17, 24, 39, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); }
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #1e293b; border-radius: 3px; }
+        input[type=range]::-webkit-slider-thumb { height: 16px; width: 16px; border-radius: 50%; background: #ec4899; cursor: pointer; -webkit-appearance: none; margin-top: -5px; box-shadow: 0 0 8px rgba(236, 72, 153, 0.5); }
+    </style>
+    <link rel="icon" type="image/svg+xml" href="/../logo.svg">
+</head>
+<body class="h-screen w-screen flex flex-col select-none overflow-hidden">
+
+    <!-- Top Navigation -->
+    <header class="glass-panel z-20 px-3 py-2 flex items-center justify-between gap-2 border-b border-slate-800 shrink-0">
+        <div class="flex items-center space-x-2 shrink-0">
+            <a href="../../index.html" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
+                <i class="fa-solid fa-arrow-left"></i> Catalog
+            </a>
+            <div class="bg-gradient-to-tr from-pink-600 to-purple-600 p-1.5 rounded-lg text-white shadow-lg shadow-pink-500/20">
+                <i class="fa-solid fa-hurricane text-base"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-xs sm:text-sm text-white">Kerr Rotating Black Hole Lab</h1>
+                <p class="text-[10px] text-slate-400">Frame-Dragging & Ergosphere Mechanics</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+            <button id="btn-play" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-play text-[10px]"></i> <span id="lbl-play">Start</span>
+            </button>
+            <button id="btn-reset" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 transition">
+                <i class="fa-solid fa-rotate-left text-[10px]"></i> Reset
+            </button>
+            <select id="preset-select" class="bg-slate-800 text-[11px] text-slate-200 border border-slate-700 rounded-lg px-2 py-1 outline-none">
+                <option value="prograde">Preset: Prograde Equatorial Orbit</option>
+                <option value="retrograde">Preset: Retrograde Frame-Dragging</option>
+                <option value="ergosphere-plunge">Preset: Ergosphere Penrose Plunge</option>
+                <option value="lens-effect">Preset: Off-Axis Gravitational Lensing</option>
+            </select>
+        </div>
+
+        <div class="flex items-center space-x-1 shrink-0">
+            <button id="btn-math-modal" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-graduation-cap"></i> Formulas
+            </button>
+            <a href="https://www.buymeacoffee.com/interactphysics" target="_blank" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg text-xs font-semibold">☕ Support</a>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex relative overflow-hidden">
+        <!-- Sidebar Controls -->
+        <aside class="w-80 glass-panel border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto p-4 space-y-4 text-xs">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center gap-2">
+                <i class="fa-solid fa-sliders"></i> Kerr Parameters
+            </h2>
+
+            <!-- Simulation Speed -->
+            <div>
+                <div class="flex justify-between text-slate-300 mb-1">
+                    <span>Simulation Speed</span>
+                    <span id="disp-sim-speed" class="mono text-pink-300">1.0x</span>
+                </div>
+                <input type="range" id="slider-sim-speed" min="0.1" max="5.0" step="0.1" value="1.0" class="w-full">
+            </div>
+
+            <!-- Spin Parameter a* -->
+            <div class="pt-2 border-t border-slate-800">
+                <div class="flex justify-between text-slate-300 mb-1">
+                    <span>Spin Parameter (<span class="katex-inline" data-formula="a_*"></span>)</span>
+                    <span id="disp-spin" class="mono text-pink-300">0.80</span>
+                </div>
+                <input type="range" id="slider-spin" min="0.0" max="0.99" step="0.01" value="0.80" class="w-full">
+                <p class="text-[10px] text-slate-500 mt-1">Dimensionless spin ($J / M^2$). 0 = Schwarzschild, 1 = Extremal.</p>
+            </div>
+
+            <!-- Black Hole Mass -->
+            <div>
+                <div class="flex justify-between text-slate-300 mb-1">
+                    <span>Black Hole Mass (<span class="katex-inline" data-formula="M"></span>)</span>
+                    <span id="disp-mass" class="mono text-pink-300">10 M☉</span>
+                </div>
+                <input type="range" id="slider-mass" min="1" max="50" step="1" value="10" class="w-full">
+            </div>
+
+            <!-- Particle Type -->
+            <div class="space-y-2 pt-2 border-t border-slate-800">
+                <label class="font-medium text-slate-300 block">Test Particle Type</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btn-type-massive" class="py-1.5 rounded-lg bg-pink-600 text-white font-semibold text-xs border border-pink-500/50">Massive Body</button>
+                    <button id="btn-type-photon" class="py-1.5 rounded-lg bg-slate-800 text-slate-400 font-semibold text-xs border border-slate-700">Photon Light</button>
+                </div>
+            </div>
+
+            <!-- Launch Angle Control -->
+            <div class="pt-2 border-t border-slate-800">
+                <div class="flex justify-between text-slate-300 mb-1">
+                    <span>Launch Angle (<span class="katex-inline" data-formula="\psi"></span>)</span>
+                    <span id="disp-angle" class="mono text-pink-300">90.0°</span>
+                </div>
+                <input type="range" id="slider-angle" min="0" max="360" step="1" value="90" class="w-full">
+                <p class="text-[10px] text-slate-500 mt-1">Initial velocity vector orientation relative to radial line.</p>
+            </div>
+
+            <!-- Initial Speed / Energy -->
+            <div class="pt-2 border-t border-slate-800">
+                <div class="flex justify-between text-slate-300 mb-1">
+                    <span>Initial Speed (<span class="katex-inline" data-formula="v / c"></span>)</span>
+                    <span id="disp-speed" class="mono text-emerald-400">0.35 c</span>
+                </div>
+                <input type="range" id="slider-speed" min="0.01" max="1.0" step="0.01" value="0.35" class="w-full">
+            </div>
+
+            <!-- Boundaries Info -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 space-y-1.5 text-[11px]">
+                <div class="text-[10px] font-semibold text-pink-400 uppercase tracking-wider">Kerr Horizons:</div>
+                <div class="flex justify-between"><span class="text-rose-400">Outer Horizon (<span class="katex-inline" data-formula="r_+"></span>)</span><span id="disp-rplus" class="mono">29.5 km</span></div>
+                <div class="flex justify-between"><span class="text-amber-400">Ergosphere (<span class="katex-inline" data-formula="r_{\text{ergo}}"></span>)</span><span id="disp-rergo" class="mono">59.0 km</span></div>
+            </div>
+
+            <!-- Overlays -->
+            <div class="pt-2 border-t border-slate-800 space-y-2">
+                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Overlays</div>
+                <div class="flex gap-2">
+                    <button id="toggle-ergo" class="flex-1 py-1.5 rounded-lg font-medium bg-pink-600/30 text-pink-300 border border-pink-500/40 text-[11px]">Ergosphere</button>
+                    <button id="toggle-vectors" class="flex-1 py-1.5 rounded-lg font-medium bg-pink-600/30 text-pink-300 border border-pink-500/40 text-[11px]">Frame Drag</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Interactive Viewport -->
+        <main class="flex-1 relative bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
+            <canvas id="sim-canvas" class="w-full h-full cursor-grab active:cursor-grabbing block touch-none"></canvas>
+
+            <!-- Zoom Controls -->
+            <div class="absolute top-4 right-4 z-10 glass-panel p-1 rounded-xl border border-slate-800 flex flex-col gap-1 text-slate-300">
+                <button id="btn-zoom-in" class="p-2 hover:bg-slate-800 hover:text-pink-400 rounded-lg"><i class="fa-solid fa-plus text-xs"></i></button>
+                <button id="btn-zoom-out" class="p-2 hover:bg-slate-800 hover:text-pink-400 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                <button id="btn-recenter" class="p-2 hover:bg-slate-800 hover:text-pink-400 rounded-lg"><i class="fa-solid fa-compress text-xs"></i></button>
+            </div>
+
+            <!-- Telemetry Bar -->
+            <div class="absolute bottom-4 left-3 right-3 z-10 glass-panel rounded-2xl p-3 border border-slate-800/90 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2 text-xs shadow-2xl">
+                <div class="glass-card p-2 rounded-xl border border-slate-800">
+                    <div class="text-[9px] text-slate-400 uppercase font-semibold">Radial Distance</div>
+                    <div id="hud-r" class="mono text-sm font-bold text-pink-400">5.40 M</div>
+                </div>
+                <div class="glass-card p-2 rounded-xl border border-slate-800">
+                    <div class="text-[9px] text-slate-400 uppercase font-semibold">Frame Dragging (<span class="katex-inline" data-formula="\omega"></span>)</div>
+                    <div id="hud-omega" class="mono text-sm font-bold text-amber-400">0.12 rad/s</div>
+                </div>
+                <div class="glass-card p-2 rounded-xl border border-slate-800">
+                    <div class="text-[9px] text-slate-400 uppercase font-semibold">Time Dilation</div>
+                    <div id="hud-dilation" class="mono text-sm font-bold text-emerald-400">1.42x</div>
+                </div>
+                <div class="glass-card p-2 rounded-xl border border-slate-800">
+                    <div class="text-[9px] text-slate-400 uppercase font-semibold">Ergosphere Status</div>
+                    <div id="hud-ergo-status" class="mono text-sm font-bold text-sky-400">Outside</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Math Modal -->
+    <div id="math-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-panel w-full max-w-3xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/60">
+                <h3 class="font-bold text-sm text-white">Kerr Metric & Frame-Dragging Equations</h3>
+                <button id="btn-close-math" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-5 space-y-4 overflow-y-auto text-xs">
+                <div class="glass-card p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-pink-400 font-bold block mb-1">1. Kerr Metric Line Element (Boyer-Lindquist Coordinates)</span>
+                    <div class="bg-slate-900/80 p-3 rounded-lg text-center my-1 text-sm katex-block" data-formula="ds^2 = -\left(1 - \frac{2Mr}{\rho^2}\right)dt^2 - \frac{4Mar\sin^2\theta}{\rho^2}dtd\phi + \frac{\rho^2}{\Delta}dr^2 + \rho^2 d\theta^2 + \left(r^2 + a^2 + \frac{2Ma^2 r\sin^2\theta}{\rho^2}\right)\sin^2\theta d\phi^2"></div>
+                </div>
+                <div class="glass-card p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-amber-400 font-bold block mb-1">2. Lense-Thirring Frame-Dragging Angular Velocity (<span class="katex-inline" data-formula="\omega"></span>)</span>
+                    <div class="bg-slate-900/80 p-3 rounded-lg text-center my-1 text-sm katex-block" data-formula="\omega = \frac{g_{t\phi}}{g_{\phi\phi}} = \frac{2Mar}{(r^2 + a^2)^2 - a^2 \Delta \sin^2\theta}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="kerr.js"></script>
+</body>
+</html>
