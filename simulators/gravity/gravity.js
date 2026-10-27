@@ -188,10 +188,16 @@ function handleCollisions() {
             const dy = b2.y - b1.y;
             const distMeters = Math.sqrt(dx * dx + dy * dy);
 
-            // Use true physical radii in meters (independent of zoom scale)
-            // Sun (~696,340 km), Earth/Planets (~6,371 km), Comet/Probes (~10 km)
-            const r1 = b1.isFixed ? 7e8 : (b1.mass > 1e25 ? 2e7 : 1e6);
-            const r2 = b2.isFixed ? 7e8 : (b2.mass > 1e25 ? 2e7 : 1e6);
+            // Determine true physical radii based on mass, not whether it's fixed
+            // Sun (~1.989e30 kg) -> ~7e8 m, Earth/Planets -> ~2e7 m, Moons/Small bodies -> ~5e6 m
+            const getRadiusMeters = (body) => {
+                if (body.mass > 1e29) return 7e8;   // Star / Sun
+                if (body.mass > 1e24) return 2e7;   // Earth-sized planet
+                return 5e6;                         // Moon / smaller body
+            };
+
+            const r1 = getRadiusMeters(b1);
+            const r2 = getRadiusMeters(b2);
             const collisionDist = Math.max(r1 + r2, 1e7);
 
             if (distMeters < collisionDist) {

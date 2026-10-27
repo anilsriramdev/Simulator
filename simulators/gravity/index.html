@@ -98,7 +98,7 @@
             touch-action: none;
         }
     </style>
-    <link rel="icon" type="image/svg+xml" href="/../logo.svg">
+    <link rel="icon" href="/../favicon.ico"/>
 </head>
 <body class="h-screen w-screen flex flex-col select-none overflow-hidden touch-action-none">
 
@@ -109,7 +109,7 @@
             <button id="btn-toggle-sidebar" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 rounded-lg text-xs font-semibold flex items-center justify-center border border-slate-700 transition" title="Toggle Inspector">
                 <i class="fa-solid fa-sliders text-indigo-400"></i>
             </button>
-            <button id="btn-back" onclick="history.back()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 rounded-lg text-xs font-semibold flex items-center justify-center border border-slate-700 transition" title="Go Back">
+            <button id="btn-back" onclick="window.location.href='/'" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 rounded-lg text-xs font-semibold flex items-center justify-center border border-slate-700 transition" title="Go Back">
                 <i class="fa-solid fa-arrow-left text-indigo-400"></i>
             </button>
             <div class="bg-gradient-to-tr from-amber-500 to-indigo-600 p-1.5 rounded-lg text-white shadow-lg shadow-indigo-500/20 hidden xs:block">
